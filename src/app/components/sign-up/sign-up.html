@@ -1,0 +1,88 @@
+<div class="header">
+  <h1>Pre-Con League Sign Up Sheet</h1>
+  <p class="description">
+    The idea here is to have players buy, or bring an unaltered pre-con deck to the league each week.
+    Every week players will play games with their pre-con decks and then at the end of the league they can add to their deck with cards from a play booster pack.
+  </p>
+</div>
+
+<div class="form-container">
+  <form [formGroup]="signUpForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="playerName">Player Name *</label>
+      <input
+        type="text"
+        id="playerName"
+        formControlName="playerName"
+        placeholder="Enter your name"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email *</label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        placeholder="your.email@example.com"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="deckName">Pre-Con Deck Name *</label>
+      <input
+        type="text"
+        id="deckName"
+        formControlName="deckName"
+        placeholder="e.g., Elven Empire"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="commander">Commander *</label>
+      <input
+        type="text"
+        id="commander"
+        formControlName="commander"
+        placeholder="e.g., Lathril, Blade of the Elves"
+      />
+    </div>
+
+    <button type="submit" [disabled]="!signUpForm.valid || isSubmitting">
+      {{ isSubmitting ? 'Signing Up...' : 'Sign Up' }}
+    </button>
+
+    @if (submitMessage) {
+      <div class="message" [class.success]="submitMessage.includes('successful')" [class.error]="!submitMessage.includes('successful')">
+        {{ submitMessage }}
+      </div>
+    }
+  </form>
+</div>
+
+<div class="signups-list">
+  <h2>Current Sign-Ups</h2>
+  
+  @if (signups.length === 0) {
+    <p class="empty-state">No sign-ups yet. Be the first to register!</p>
+  } @else {
+    <div class="signups-grid">
+      @for (signup of signups; track signup.id) {
+        <div class="signup-card">
+          <div class="player-name">{{ signup.playerName }}</div>
+          <div class="signup-details">
+            <div class="detail-row">
+              <span class="label">Deck:</span>
+              <span class="value">{{ signup.deckName }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Commander:</span>
+              <span class="value">{{ signup.commander }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div> 
+
