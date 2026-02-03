@@ -6,6 +6,7 @@ interface Signup {
   id: string;
   playerName: string;
   email: string;
+  discordUsername: string;
   deckName: string;
   commander: string;
   createdAt: string;
@@ -22,10 +23,12 @@ export class SignUp implements OnInit {
   submitMessage = '';
   isSubmitting = false;
   signups: Signup[] = [];
+  showSignups = false;
 
   signUpForm = new FormGroup({
     playerName: new FormControl('', [Validators.required]),
     email: new FormControl('', [Validators.required, Validators.email]),
+    discordUsername: new FormControl('', [Validators.required]),
     deckName: new FormControl('', [Validators.required]),
     commander: new FormControl('', [Validators.required]),
   });
@@ -67,5 +70,9 @@ export class SignUp implements OnInit {
           }
         });
     }
+  }
+
+  toggleSignups() {
+    this.showSignups = !this.showSignups;
   }
 }

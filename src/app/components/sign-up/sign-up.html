@@ -3,6 +3,7 @@
   <p class="description">
     The idea here is to have players buy, or bring an unaltered pre-con deck to the league each week.
     Every week players will play games with their pre-con decks and then at the end of the league they can add to their deck with cards from a play booster pack.
+    I would very much like to get at least 16 players to make this work, so please sign up if you are interested!
   </p>
 </div>
 
@@ -25,6 +26,16 @@
         id="email"
         formControlName="email"
         placeholder="your.email@example.com"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="discordUsername">Discord Username *</label>
+      <input
+        type="text"
+        id="discordUsername"
+        formControlName="discordUsername"
+        placeholder="e.g., username#1234"
       />
     </div>
 
@@ -60,6 +71,13 @@
   </form>
 </div>
 
+<div class="signups-section">
+  <button type="button" class="show-signups-btn" (click)="toggleSignups()">
+    {{ showSignups ? 'Hide' : 'Show' }} Current Sign-Ups ({{ signups.length }})
+  </button>
+</div>
+
+@if (showSignups) {
 <div class="signups-list">
   <h2>Current Sign-Ups</h2>
   
@@ -71,6 +89,10 @@
         <div class="signup-card">
           <div class="player-name">{{ signup.playerName }}</div>
           <div class="signup-details">
+                        <div class="detail-row">
+                          <span class="label">Discord:</span>
+                          <span class="value">{{ signup.discordUsername }}</span>
+                        </div>
             <div class="detail-row">
               <span class="label">Deck:</span>
               <span class="value">{{ signup.deckName }}</span>
@@ -84,5 +106,6 @@
       }
     </div>
   }
-</div> 
+</div>
+} 
 

@@ -8,7 +8,12 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Ensure data directory exists
@@ -51,6 +56,18 @@ async function writeSignups(signups) {
 
 // Routes
 
+// Get precons
+app.get('/api/precons', async (req, res) => {
+  try {
+    const preconsFile = path.join(__dirname, 'data', 'precons-2023.json');
+    const data = await fs.readFile(preconsFile, 'utf8');
+    res.json(JSON.parse(data));
+  } catch (error) {
+    console.error('Error reading precons:', error);
+    res.status(500).json({ error: 'Failed to retrieve precons' });
+  }
+});
+
 // Get all signups
 app.get('/api/signups', async (req, res) => {
   try {
@@ -64,10 +81,10 @@ app.get('/api/signups', async (req, res) => {
 // Create a new signup
 app.post('/api/signups', async (req, res) => {
   try {
-    const { playerName, email, deckName, commander } = req.body;
+    const { playerName, email, discordUsername, deckName, commander } = req.body;
     
     // Validate required fields
-    if (!playerName || !email || !deckName || !commander) {
+    if (!playerName || !email || !discordUsername || !deckName || !commander) {
       return res.status(400).json({ error: 'All fields are required' });
     }
     
@@ -82,6 +99,7 @@ app.post('/api/signups', async (req, res) => {
       id: Date.now().toString(),
       playerName,
       email,
+      discordUsername,
       deckName,
       commander,
       createdAt: new Date().toISOString()
