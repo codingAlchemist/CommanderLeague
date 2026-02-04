@@ -23,7 +23,7 @@ export class SignUp implements OnInit {
   submitMessage = '';
   isSubmitting = false;
   signups: Signup[] = [];
-  showSignups = false;
+  showModal = false;
 
   signUpForm = new FormGroup({
     playerName: new FormControl('', [Validators.required]),
@@ -72,7 +72,11 @@ export class SignUp implements OnInit {
     }
   }
 
-  toggleSignups() {
-    this.showSignups = !this.showSignups;
+  openModal() {
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
   }
 }

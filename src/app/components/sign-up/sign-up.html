@@ -63,10 +63,7 @@
       {{ isSubmitting ? 'Signing Up...' : 'Sign Up' }}
     </button>
 
-    @if (submitMessage) { res.header('Access-Control-Allow-Origin', 'https://your-frontend-domain.com');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.send('Hello from server!');
+    @if (submitMessage) {
       <div class="message" [class.success]="submitMessage.includes('successful')" [class.error]="!submitMessage.includes('successful')">
         {{ submitMessage }}
       </div>
@@ -75,40 +72,46 @@
 </div>
 
 <div class="signups-section">
-  <button type="button" class="show-signups-btn" (click)="toggleSignups()">
-    {{ showSignups ? 'Hide' : 'Show' }} Current Sign-Ups ({{ signups.length }})
+  <button type="button" class="show-signups-btn" (click)="openModal()">
+    Show Current Sign-Ups ({{ signups.length }})
   </button>
 </div>
 
-@if (showSignups) {
-<div class="signups-list">
-  <h2>Current Sign-Ups</h2>
-  
-  @if (signups.length === 0) {
-    <p class="empty-state">No sign-ups yet. Be the first to register!</p>
-  } @else {
-    <div class="signups-grid">
-      @for (signup of signups; track signup.id) {
-        <div class="signup-card">
-          <div class="player-name">{{ signup.playerName }}</div>
-          <div class="signup-details">
-                        <div class="detail-row">
-                          <span class="label">Discord:</span>
-                          <span class="value">{{ signup.discordUsername }}</span>
-                        </div>
-            <div class="detail-row">
-              <span class="label">Deck:</span>
-              <span class="value">{{ signup.deckName }}</span>
+@if (showModal) {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Current Sign-Ups</h2>
+      <button type="button" class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      @if (signups.length === 0) {
+        <p class="empty-state">No sign-ups yet. Be the first to register!</p>
+      } @else {
+        <div class="signups-grid">
+          @for (signup of signups; track signup.id) {
+            <div class="signup-card">
+              <div class="player-name">{{ signup.playerName }}</div>
+              <div class="signup-details">
+                <div class="detail-row">
+                  <span class="label">Discord:</span>
+                  <span class="value">{{ signup.discordUsername }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Deck:</span>
+                  <span class="value">{{ signup.deckName }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Commander:</span>
+                  <span class="value">{{ signup.commander }}</span>
+                </div>
+              </div>
             </div>
-            <div class="detail-row">
-              <span class="label">Commander:</span>
-              <span class="value">{{ signup.commander }}</span>
-            </div>
-          </div>
+          }
         </div>
       }
     </div>
-  }
+  </div>
 </div>
 } 
 
