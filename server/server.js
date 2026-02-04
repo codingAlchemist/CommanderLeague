@@ -12,7 +12,7 @@ app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: false
 }));
 app.use(express.json());
 
@@ -70,6 +70,9 @@ app.get('/api/precons', async (req, res) => {
 
 // Get all signups
 app.get('/api/signups', async (req, res) => {
+  // res.header("Access-Control-Allow-Origin", "*");
+  // res.header("Access-Control-Allow-Methods", "GET, PUT, POST");
+  // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   try {
     const signups = await readSignups();
     res.json(signups);
@@ -80,6 +83,9 @@ app.get('/api/signups', async (req, res) => {
 
 // Create a new signup
 app.post('/api/signups', async (req, res) => {
+  // res.header("Access-Control-Allow-Origin", "*");
+  // res.header("Access-Control-Allow-Methods", "GET, PUT, POST");
+  // res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   try {
     const { playerName, email, discordUsername, deckName, commander } = req.body;
     
@@ -116,6 +122,9 @@ app.post('/api/signups', async (req, res) => {
 
 // Delete a signup
 app.delete('/api/signups/:id', async (req, res) => {
+  res.header("Access-Control-Allow-Origin", "*");ross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at http://localhost:3000/api/signups. (Reason: CORS header ‘Access-Control-Allow-Origin’ 
+  res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   try {
     const { id } = req.params;
     const signups = await readSignups();

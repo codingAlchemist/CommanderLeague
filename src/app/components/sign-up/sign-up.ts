@@ -38,7 +38,7 @@ export class SignUp implements OnInit {
   }
 
   loadSignups() {
-    this.http.get<Signup[]>('http://localhost:3000/api/signups')
+    this.http.get<Signup[]>('/api/signups')
       .subscribe({
         next: (signups) => {
           this.signups = signups;
@@ -54,7 +54,7 @@ export class SignUp implements OnInit {
       this.isSubmitting = true;
       this.submitMessage = '';
       
-      this.http.post('http://localhost:3000/api/signups', this.signUpForm.value)
+      this.http.post('/api/signups', this.signUpForm.value)
         .subscribe({
           next: (response) => {
             console.log('Sign up successful:', response);

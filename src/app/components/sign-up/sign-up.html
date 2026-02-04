@@ -63,7 +63,10 @@
       {{ isSubmitting ? 'Signing Up...' : 'Sign Up' }}
     </button>
 
-    @if (submitMessage) {
+    @if (submitMessage) { res.header('Access-Control-Allow-Origin', 'https://your-frontend-domain.com');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.send('Hello from server!');
       <div class="message" [class.success]="submitMessage.includes('successful')" [class.error]="!submitMessage.includes('successful')">
         {{ submitMessage }}
       </div>
