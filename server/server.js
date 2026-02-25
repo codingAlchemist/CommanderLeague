@@ -133,6 +133,71 @@ app.delete('/api/signups/:id', async (req, res) => {
   }
 });
 
+// Group players into groups of 4 (in signup order)
+app.get('/api/groups', async (req, res) => {
+  try {
+    const signups = await readSignups();
+    
+    // Group players into groups of 4
+    const groups = [];
+    for (let i = 0; i < signups.length; i += 4) {
+      groups.push({
+        groupNumber: Math.floor(i / 4) + 1,
+        players: signups.slice(i, i + 4),
+        playerCount: Math.min(4, signups.length - i)
+      });
+    }
+    
+    res.json({
+      totalPlayers: signups.length,
+      totalGroups: groups.length,
+      groups: groups
+    });
+  } catch (error) {
+    console.error('Error creating groups:', error);
+    res.status(500).json({ error: 'Failed to create groups' });
+  }
+});
+
+// Group players into groups of 4 randomly
+app.get('/api/groups/random', async (req, res) => {
+  try {
+    const signups = await readSignups();
+    
+    // Shuffle players randomly
+    const shuffledPlayers = shuffleArray([...signups]);
+    
+    // Group players into groups of 4
+    const groups = [];
+    for (let i = 0; i < shuffledPlayers.length; i += 4) {
+      groups.push({
+        groupNumber: Math.floor(i / 4) + 1,
+        players: shuffledPlayers.slice(i, i + 4),
+        playerCount: Math.min(4, shuffledPlayers.length - i)
+      });
+    }
+    
+    res.json({
+      totalPlayers: shuffledPlayers.length,
+      totalGroups: groups.length,
+      groups: groups,
+      shuffled: true
+    });
+  } catch (error) {
+    console.error('Error creating random groups:', error);
+    res.status(500).json({ error: 'Failed to create random groups' });
+  }
+});
+
+// Helper function to shuffle array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
