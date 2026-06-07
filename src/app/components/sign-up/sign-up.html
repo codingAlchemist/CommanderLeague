@@ -106,6 +106,15 @@
                   <span class="value">{{ signup.commander }}</span>
                 </div>
               </div>
+              <div class="signup-actions">
+                <button
+                  type="button"
+                  class="delete-signup-btn"
+                  [disabled]="isDeletingId === signup.id"
+                  (click)="deleteSignup(signup)">
+                  {{ isDeletingId === signup.id ? 'Removing...' : 'Remove Sign Up' }}
+                </button>
+              </div>
             </div>
           }
         </div>

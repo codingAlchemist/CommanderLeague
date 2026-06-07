@@ -452,6 +452,33 @@
       gap: 0.75rem;
     }
 
+    .signup-actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .delete-signup-btn {
+      border: none;
+      border-radius: 6px;
+      background: #b91c1c;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.6rem 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background: #991b1b;
+      }
+
+      &:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+    }
+
     .detail-row {
       display: flex;
       gap: 0.5rem;

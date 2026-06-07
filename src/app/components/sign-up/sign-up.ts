@@ -22,6 +22,7 @@ export class SignUp implements OnInit {
   private http = inject(HttpClient);
   submitMessage = '';
   isSubmitting = false;
+  isDeletingId: string | null = null;
   signups: Signup[] = [];
   showModal = false;
 
@@ -78,5 +79,32 @@ export class SignUp implements OnInit {
 
   closeModal() {
     this.showModal = false;
+  }
+
+  deleteSignup(signup: Signup) {
+    if (this.isDeletingId) {
+      return;
+    }
+
+    const shouldDelete = confirm(`Remove ${signup.playerName} from the sign-up list?`);
+    if (!shouldDelete) {
+      return;
+    }
+
+    this.isDeletingId = signup.id;
+
+    this.http.delete(`/api/signups/${signup.id}`)
+      .subscribe({
+        next: () => {
+          this.signups = this.signups.filter(currentSignup => currentSignup.id !== signup.id);
+          this.submitMessage = 'Sign up removed successfully.';
+          this.isDeletingId = null;
+        },
+        error: (error) => {
+          console.error('Failed to delete signup:', error);
+          this.submitMessage = error.error?.error || 'Failed to remove sign up. Please try again.';
+          this.isDeletingId = null;
+        }
+      });
   }
 }
