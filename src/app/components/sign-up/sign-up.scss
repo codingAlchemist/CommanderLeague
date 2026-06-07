@@ -361,6 +361,35 @@
     color: #2c3e50;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .clear-signups-btn {
+    border: none;
+    border-radius: 999px;
+    background: #7f1d1d;
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    padding: 0.55rem 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background: #991b1b;
+    }
+
+    &:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+  }
+
   .close-btn {
     background: none;
     border: none;
@@ -392,6 +421,15 @@
 
     h2 {
       font-size: 1.4rem;
+    }
+
+    .header-actions {
+      gap: 0.5rem;
+    }
+
+    .clear-signups-btn {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.75rem;
     }
 
     .close-btn {

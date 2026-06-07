@@ -82,7 +82,16 @@
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h2>Current Sign-Ups</h2>
-      <button type="button" class="close-btn" (click)="closeModal()">&times;</button>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="clear-signups-btn"
+          [disabled]="signups.length === 0 || isClearingAll || !!isDeletingId"
+          (click)="clearAllSignups()">
+          {{ isClearingAll ? 'Removing All...' : 'Remove All' }}
+        </button>
+        <button type="button" class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
     </div>
     <div class="modal-body">
       @if (signups.length === 0) {
@@ -110,7 +119,7 @@
                 <button
                   type="button"
                   class="delete-signup-btn"
-                  [disabled]="isDeletingId === signup.id"
+                  [disabled]="isClearingAll || isDeletingId === signup.id"
                   (click)="deleteSignup(signup)">
                   {{ isDeletingId === signup.id ? 'Removing...' : 'Remove Sign Up' }}
                 </button>

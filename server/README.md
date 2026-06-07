@@ -26,7 +26,10 @@ npm run dev
 - `GET /api/signups` - Get all signups
 - `POST /api/signups` - Create a new signup
 - `DELETE /api/signups/:id` - Delete a signup
+- `GET /api/week-state` - Get current league week state
+- `PUT /api/week-state/current` - Start/set current week
 
 ## Data Storage
 
 Signup data is stored in `server/data/signups.json`.
+Week progression data is stored in `server/data/week-state.json`.

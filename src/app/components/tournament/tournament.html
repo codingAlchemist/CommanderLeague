@@ -54,6 +54,29 @@
 
   <!-- Tournament View -->
   <div class="tournament-view" *ngIf="!showSignups">
+    <section class="week-progress" *ngIf="!isLoading">
+      <div class="week-progress-header">
+        <h2>League Weeks</h2>
+        <p *ngIf="!isLoadingWeekState && weekState.currentWeek">Current Week: {{ weekState.currentWeek }}</p>
+        <p *ngIf="!isLoadingWeekState && !weekState.currentWeek">No week started yet</p>
+        <p *ngIf="isLoadingWeekState">Loading week status...</p>
+      </div>
+
+      <div class="week-buttons">
+        <button
+          class="week-btn"
+          *ngFor="let week of weeks"
+          [class.active-week]="weekState.currentWeek === week"
+          [class.started-week]="isWeekStarted(week)"
+          [disabled]="isLoadingWeekState || isStartingWeek"
+          (click)="startWeek(week)">
+          <span class="week-label">Week {{ week }}</span>
+          <span class="week-status" *ngIf="weekState.currentWeek === week">Current</span>
+          <span class="week-status" *ngIf="weekState.currentWeek !== week && isWeekStarted(week)">Started</span>
+        </button>
+      </div>
+    </section>
+
     <div class="tournament-info" *ngIf="!isLoading && groups.length > 0">
       <p><strong>Total Players:</strong> {{ players.length }}</p>
       <p><strong>Total Groups:</strong> {{ groups.length }}</p>

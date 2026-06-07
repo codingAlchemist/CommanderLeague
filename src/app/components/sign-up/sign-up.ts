@@ -23,6 +23,7 @@ export class SignUp implements OnInit {
   submitMessage = '';
   isSubmitting = false;
   isDeletingId: string | null = null;
+  isClearingAll = false;
   signups: Signup[] = [];
   showModal = false;
 
@@ -82,7 +83,7 @@ export class SignUp implements OnInit {
   }
 
   deleteSignup(signup: Signup) {
-    if (this.isDeletingId) {
+    if (this.isDeletingId || this.isClearingAll) {
       return;
     }
 
@@ -104,6 +105,33 @@ export class SignUp implements OnInit {
           console.error('Failed to delete signup:', error);
           this.submitMessage = error.error?.error || 'Failed to remove sign up. Please try again.';
           this.isDeletingId = null;
+        }
+      });
+  }
+
+  clearAllSignups() {
+    if (this.isClearingAll || this.isDeletingId || this.signups.length === 0) {
+      return;
+    }
+
+    const shouldDeleteAll = confirm('Remove all sign-ups from the list? This cannot be undone.');
+    if (!shouldDeleteAll) {
+      return;
+    }
+
+    this.isClearingAll = true;
+
+    this.http.delete('/api/signups')
+      .subscribe({
+        next: () => {
+          this.signups = [];
+          this.submitMessage = 'All sign ups removed successfully.';
+          this.isClearingAll = false;
+        },
+        error: (error) => {
+          console.error('Failed to clear signups:', error);
+          this.submitMessage = error.error?.error || 'Failed to remove all sign ups. Please try again.';
+          this.isClearingAll = false;
         }
       });
   }

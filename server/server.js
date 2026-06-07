@@ -7,6 +7,7 @@ const Player = require('./models/Player');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
+const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 
 // Middleware
 app.use(cors({
@@ -32,6 +33,17 @@ async function ensureDataDirectory() {
   } catch {
     await fs.writeFile(DATA_FILE, JSON.stringify([], null, 2));
   }
+
+  try {
+    await fs.access(WEEK_STATE_FILE);
+  } catch {
+    const initialWeekState = {
+      currentWeek: null,
+      startedWeeks: [],
+      updatedAt: new Date().toISOString()
+    };
+    await fs.writeFile(WEEK_STATE_FILE, JSON.stringify(initialWeekState, null, 2));
+  }
 }
 
 // Read signups from file
@@ -51,6 +63,37 @@ async function writeSignups(signups) {
     await fs.writeFile(DATA_FILE, JSON.stringify(signups, null, 2));
   } catch (error) {
     console.error('Error writing signups:', error);
+    throw error;
+  }
+}
+
+async function readWeekState() {
+  try {
+    const data = await fs.readFile(WEEK_STATE_FILE, 'utf8');
+    const parsed = JSON.parse(data);
+
+    return {
+      currentWeek: typeof parsed.currentWeek === 'number' ? parsed.currentWeek : null,
+      startedWeeks: Array.isArray(parsed.startedWeeks)
+        ? parsed.startedWeeks.filter(week => Number.isInteger(week) && week > 0)
+        : [],
+      updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Error reading week state:', error);
+    return {
+      currentWeek: null,
+      startedWeeks: [],
+      updatedAt: new Date().toISOString()
+    };
+  }
+}
+
+async function writeWeekState(weekState) {
+  try {
+    await fs.writeFile(WEEK_STATE_FILE, JSON.stringify(weekState, null, 2));
+  } catch (error) {
+    console.error('Error writing week state:', error);
     throw error;
   }
 }
@@ -76,6 +119,43 @@ app.get('/api/signups', async (req, res) => {
     res.json(signups);
   } catch (error) {
     res.status(500).json({ error: 'Failed to retrieve signups' });
+  }
+});
+
+// Get tournament week state
+app.get('/api/week-state', async (req, res) => {
+  try {
+    const weekState = await readWeekState();
+    res.json(weekState);
+  } catch (error) {
+    console.error('Error retrieving week state:', error);
+    res.status(500).json({ error: 'Failed to retrieve week state' });
+  }
+});
+
+// Start a week in the tournament
+app.put('/api/week-state/current', async (req, res) => {
+  try {
+    const { week } = req.body;
+
+    if (!Number.isInteger(week) || week < 1) {
+      return res.status(400).json({ error: 'Week must be a positive integer' });
+    }
+
+    const weekState = await readWeekState();
+    const startedWeeks = Array.from(new Set([...weekState.startedWeeks, week])).sort((a, b) => a - b);
+
+    const updatedState = {
+      currentWeek: week,
+      startedWeeks,
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeWeekState(updatedState);
+    res.json(updatedState);
+  } catch (error) {
+    console.error('Error updating week state:', error);
+    res.status(500).json({ error: 'Failed to update week state' });
   }
 });
 
@@ -127,6 +207,17 @@ app.delete('/api/signups/:id', async (req, res) => {
     res.json({ message: 'Signup deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete signup' });
+  }
+});
+
+// Delete all signups
+app.delete('/api/signups', async (req, res) => {
+  try {
+    await writeSignups([]);
+    res.json({ message: 'All signups deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting all signups:', error);
+    res.status(500).json({ error: 'Failed to delete all signups' });
   }
 });
 

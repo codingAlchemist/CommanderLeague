@@ -1,1 +1,10 @@
-<router-outlet />
+<main class="app-shell">
+	<nav class="tabs" aria-label="Main navigation">
+		<a routerLink="/tournament" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tournament</a>
+		<a routerLink="/sign-up" routerLinkActive="active">Sign Up Sheet</a>
+	</nav>
+
+	<section class="page-content">
+		<router-outlet />
+	</section>
+</main>

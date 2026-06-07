@@ -1,0 +1,55 @@
+.app-shell {
+	min-height: 100vh;
+	background: linear-gradient(180deg, #f8fbff 0%, #f3f6fa 100%);
+}
+
+.tabs {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	display: flex;
+	gap: 0.5rem;
+	padding: 0.75rem 1rem;
+	background: #0f172a;
+	box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+
+	a {
+		text-decoration: none;
+		color: #cbd5e1;
+		font-weight: 600;
+		font-size: 0.95rem;
+		padding: 0.55rem 0.9rem;
+		border-radius: 999px;
+		transition: background-color 0.2s ease, color 0.2s ease;
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.14);
+			color: #f8fafc;
+		}
+
+		&.active {
+			background: #22c55e;
+			color: #052e16;
+		}
+	}
+}
+
+.page-content {
+	padding: 1rem;
+}
+
+@media (max-width: 640px) {
+	.tabs {
+		gap: 0.35rem;
+		padding: 0.65rem;
+
+		a {
+			font-size: 0.86rem;
+			padding: 0.5rem 0.7rem;
+		}
+	}
+
+	.page-content {
+		padding: 0.75rem;
+	}
+}

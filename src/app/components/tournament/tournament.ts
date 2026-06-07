@@ -19,6 +19,12 @@ interface PlayerGroup {
   players: Player[];
 }
 
+interface WeekState {
+  currentWeek: number | null;
+  startedWeeks: number[];
+  updatedAt: string;
+}
+
 @Component({
   selector: 'app-tournament',
   imports: [CommonModule],
@@ -38,12 +44,21 @@ export class Tournament implements OnInit {
   showSignups = false;
   isLoading = false;
   isLoadingSignups = false;
+  isLoadingWeekState = false;
+  isStartingWeek = false;
   errorMessage = '';
   readonly minWinnersBracketSize = 3;
   readonly maxWinnersBracketSize = 4;
+  readonly weeks = [1, 2, 3, 4, 5, 6, 7, 8];
+  weekState: WeekState = {
+    currentWeek: null,
+    startedWeeks: [],
+    updatedAt: ''
+  };
 
   ngOnInit() {
     this.loadRandomPlayers();
+    this.loadWeekState();
   }
 
   loadRandomPlayers() {
@@ -243,5 +258,54 @@ export class Tournament implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  loadWeekState() {
+    this.isLoadingWeekState = true;
+
+    this.http.get<WeekState>('/api/week-state').subscribe({
+      next: (state) => {
+        this.weekState = state;
+        this.isLoadingWeekState = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to load week state:', error);
+        this.errorMessage = 'Failed to load week progress';
+        this.isLoadingWeekState = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  startWeek(week: number) {
+    if (this.isStartingWeek) {
+      return;
+    }
+
+    const shouldStart = confirm(`Start Week ${week}?`);
+    if (!shouldStart) {
+      return;
+    }
+
+    this.isStartingWeek = true;
+
+    this.http.put<WeekState>('/api/week-state/current', { week }).subscribe({
+      next: (state) => {
+        this.weekState = state;
+        this.isStartingWeek = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to start week:', error);
+        this.errorMessage = 'Failed to start week';
+        this.isStartingWeek = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  isWeekStarted(week: number): boolean {
+    return this.weekState.startedWeeks.includes(week);
   }
 }

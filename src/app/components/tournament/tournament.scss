@@ -138,6 +138,79 @@
   }
 }
 
+.week-progress {
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #f8fafc;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.25);
+}
+
+.week-progress-header {
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 0;
+    color: #cbd5e1;
+    font-weight: 600;
+  }
+}
+
+.week-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.week-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 0.65rem;
+  background: #1d4ed8;
+  color: #eff6ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(29, 78, 216, 0.45);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  &.started-week {
+    background: #0369a1;
+  }
+
+  &.active-week {
+    background: #16a34a;
+  }
+}
+
+.week-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.week-status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .groups-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
@@ -538,6 +611,18 @@
     gap: 0.5rem;
     align-items: center;
     font-size: 0.95rem;
+  }
+
+  .week-progress {
+    padding: 1rem;
+  }
+
+  .week-progress-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .week-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .group-card {
