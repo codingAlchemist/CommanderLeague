@@ -26,7 +26,7 @@ async function ensureDataDirectory() {
   } catch {
     await fs.mkdir(dataDir, { recursive: true });
   }
-  
+
   // Initialize data file if it doesn't exist
   try {
     await fs.access(DATA_FILE);
@@ -122,6 +122,18 @@ app.get('/api/signups', async (req, res) => {
   }
 });
 
+// Get signups ranked by points (descending)
+app.get('/api/signups/ranked', async (req, res) => {
+  try {
+    const signups = await readSignups();
+    const ranked = (Array.isArray(signups) ? signups.slice() : []).sort((a, b) => (b.points || 0) - (a.points || 0));
+    res.json(ranked);
+  } catch (error) {
+    console.error('Error retrieving ranked signups:', error);
+    res.status(500).json({ error: 'Failed to retrieve ranked signups' });
+  }
+});
+
 // Get tournament week state
 app.get('/api/week-state', async (req, res) => {
   try {
@@ -159,31 +171,117 @@ app.put('/api/week-state/current', async (req, res) => {
   }
 });
 
+// Patch week state (allow partial overwrite of currentWeek and startedWeeks)
+app.patch('/api/week-state', async (req, res) => {
+  try {
+    const { currentWeek, startedWeeks } = req.body;
+
+    const validCurrentWeek = typeof currentWeek === 'number' && Number.isInteger(currentWeek) && currentWeek > 0
+      ? currentWeek
+      : null;
+
+    const validStartedWeeks = Array.isArray(startedWeeks)
+      ? startedWeeks
+        .map(w => parseInt(w, 10))
+        .filter(w => Number.isInteger(w) && w > 0)
+        .sort((a, b) => a - b)
+      : [];
+
+    const updatedState = {
+      currentWeek: validCurrentWeek,
+      startedWeeks: validStartedWeeks,
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeWeekState(updatedState);
+    res.json(updatedState);
+  } catch (error) {
+    console.error('Error patching week state:', error);
+    res.status(500).json({ error: 'Failed to patch week state' });
+  }
+});
+
+// Reset the current week and started weeks
+app.post('/api/week-state/reset', async (req, res) => {
+  try {
+    const resetState = {
+      currentWeek: null,
+      startedWeeks: [],
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeWeekState(resetState);
+    res.json(resetState);
+  } catch (error) {
+    console.error('Error resetting week state:', error);
+    res.status(500).json({ error: 'Failed to reset week state' });
+  }
+});
+
+// Toggle a week as started or ended
+app.post('/api/week-state/toggle', async (req, res) => {
+  try {
+    const { week } = req.body;
+
+    if (!Number.isInteger(week) || week < 1) {
+      return res.status(400).json({ error: 'Week must be a positive integer' });
+    }
+
+    const weekState = await readWeekState();
+    const started = new Set(weekState.startedWeeks);
+    let updatedCurrentWeek = weekState.currentWeek;
+
+    if (started.has(week)) {
+      // End the week
+      started.delete(week);
+      if (updatedCurrentWeek === week) {
+        updatedCurrentWeek = null;
+      }
+    } else {
+      // Start the week
+      started.add(week);
+      updatedCurrentWeek = week;
+    }
+
+    const updatedState = {
+      currentWeek: updatedCurrentWeek,
+      startedWeeks: Array.from(started).sort((a, b) => a - b),
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeWeekState(updatedState);
+    res.json(updatedState);
+  } catch (error) {
+    console.error('Error toggling week state:', error);
+    res.status(500).json({ error: 'Failed to toggle week state' });
+  }
+});
+
 // Create a new signup
 app.post('/api/signups', async (req, res) => {
   try {
     // Validate using Player model
     const validation = Player.validate(req.body);
     if (!validation.isValid) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: validation.errors 
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: validation.errors
       });
     }
-    
+
     const signups = await readSignups();
-    
+
     // Check for duplicate email
     if (signups.some(signup => signup.email === req.body.email)) {
       return res.status(409).json({ error: 'Email already registered' });
     }
-    
+
     // Create new player using the model
     const newPlayer = new Player(req.body);
-    
+
     signups.push(newPlayer.toJSON());
     await writeSignups(signups);
-    
+
     res.status(201).json(newPlayer.toJSON());
   } catch (error) {
     console.error('Error creating signup:', error);
@@ -196,13 +294,13 @@ app.delete('/api/signups/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const signups = await readSignups();
-    
+
     const filteredSignups = signups.filter(signup => signup.id !== id);
-    
+
     if (filteredSignups.length === signups.length) {
       return res.status(404).json({ error: 'Signup not found' });
     }
-    
+
     await writeSignups(filteredSignups);
     res.json({ message: 'Signup deleted successfully' });
   } catch (error) {
@@ -226,21 +324,21 @@ app.patch('/api/signups/:id/points', async (req, res) => {
   try {
     const { id } = req.params;
     const { points } = req.body;
-    
+
     if (typeof points !== 'number') {
       return res.status(400).json({ error: 'Points must be a number' });
     }
-    
+
     const signups = await readSignups();
     const playerIndex = signups.findIndex(signup => signup.id === id);
-    
+
     if (playerIndex === -1) {
       return res.status(404).json({ error: 'Player not found' });
     }
-    
+
     signups[playerIndex].points = points;
     await writeSignups(signups);
-    
+
     res.json(signups[playerIndex]);
   } catch (error) {
     console.error('Error updating points:', error);
@@ -252,7 +350,7 @@ app.patch('/api/signups/:id/points', async (req, res) => {
 app.get('/api/groups', async (req, res) => {
   try {
     const signups = await readSignups();
-    
+
     // Group players into groups of 4
     const groups = [];
     for (let i = 0; i < signups.length; i += 4) {
@@ -262,7 +360,7 @@ app.get('/api/groups', async (req, res) => {
         playerCount: Math.min(4, signups.length - i)
       });
     }
-    
+
     res.json({
       totalPlayers: signups.length,
       totalGroups: groups.length,
@@ -278,10 +376,10 @@ app.get('/api/groups', async (req, res) => {
 app.get('/api/groups/random', async (req, res) => {
   try {
     const signups = await readSignups();
-    
+
     // Shuffle players randomly
     const shuffledPlayers = shuffleArray([...signups]);
-    
+
     res.json(shuffledPlayers);
   } catch (error) {
     console.error('Error creating random groups:', error);

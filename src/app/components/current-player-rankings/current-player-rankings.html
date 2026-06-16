@@ -1,0 +1,41 @@
+<section class="current-player-rankings">
+  <header class="rankings-header">
+    <h2>Current Player Rankings</h2>
+    <button type="button" class="refresh-btn" (click)="loadPlayers()" [disabled]="isLoading"
+      aria-label="Refresh rankings">
+      <svg class="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <path d="M21 3v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span class="refresh-text">Refresh</span>
+    </button>
+  </header>
+
+  <div *ngIf="isLoading">Loading rankings…</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <table *ngIf="!isLoading && !error && displayedPlayers.length > 0" class="rankings-table">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Name</th>
+        <th>Deck</th>
+        <th>Email</th>
+        <th>Points</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let player of displayedPlayers; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td>{{ player.playerName || '—' }}</td>
+        <td>{{ player.deckName || '—' }}</td>
+        <td>{{ player.email || '—' }}</td>
+        <td class="points">{{ player.points || 0 }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!isLoading && !error && displayedPlayers.length === 0">No players signed up yet.</div>
+</section>

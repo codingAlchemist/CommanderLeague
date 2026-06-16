@@ -5,6 +5,10 @@
       <button class="action-btn" (click)="toggleSignups()" [disabled]="isLoading">
         {{ showSignups ? '🎮 View Tournament' : '📋 View All Signups' }}
       </button>
+      <button class="action-btn" (click)="toggleRankings()" [disabled]="isLoading || players.length === 0"
+        [title]="players.length === 0 ? 'No players signed up' : (showRankings ? 'Hide Rankings' : 'View Rankings')">
+        {{ showRankings ? '📊 Hide Rankings' : '📈 View Rankings' }}
+      </button>
       <button class="shuffle-btn" (click)="shuffleGroups()" [disabled]="isLoading">
         🔄 Shuffle Groups
       </button>
@@ -52,23 +56,39 @@
     </div>
   </div>
 
+  <!-- Rankings View -->
+  <div class="rankings-view" *ngIf="showRankings && !isLoading">
+    <app-current-player-rankings></app-current-player-rankings>
+  </div>
+
   <!-- Tournament View -->
-  <div class="tournament-view" *ngIf="!showSignups">
+  <div class="tournament-view" *ngIf="!showSignups && !showRankings">
     <section class="week-progress" *ngIf="!isLoading">
       <div class="week-progress-header">
         <h2>League Weeks</h2>
         <p *ngIf="!isLoadingWeekState && weekState.currentWeek">Current Week: {{ weekState.currentWeek }}</p>
         <p *ngIf="!isLoadingWeekState && !weekState.currentWeek">No week started yet</p>
         <p *ngIf="isLoadingWeekState">Loading week status...</p>
+
+        <div class="week-actions">
+          <button class="reset-weeks-btn" (click)="resetWeeks()"
+            [disabled]="isResettingWeeks || isLoadingWeekState || isStartingWeek"
+            title="Reset all weeks and clear started status">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true">
+              <path d="M3 6h6l1-2h4l1 2h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+              <path d="M20 14a8 8 0 11-7.995-8.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            <span>Reset Weeks</span>
+          </button>
+        </div>
       </div>
 
       <div class="week-buttons">
-        <button
-          class="week-btn"
-          *ngFor="let week of weeks"
-          [class.active-week]="weekState.currentWeek === week"
-          [class.started-week]="isWeekStarted(week)"
-          [disabled]="isLoadingWeekState || isStartingWeek"
+        <button class="week-btn" *ngFor="let week of weeks" [class.active-week]="weekState.currentWeek === week"
+          [class.started-week]="isWeekStarted(week)" [disabled]="isLoadingWeekState || isStartingWeek"
           (click)="startWeek(week)">
           <span class="week-label">Week {{ week }}</span>
           <span class="week-status" *ngIf="weekState.currentWeek === week">Current</span>
@@ -84,66 +104,19 @@
     </div>
 
     <div class="groups-container" *ngIf="!isLoading && groups.length > 0">
-    <div class="group-card" *ngFor="let group of groups">
-      <div class="group-header">
-        <h2>Pod {{ group.groupNumber }}</h2>
-        <span class="player-count">{{ group.players.length }} Players</span>
-      </div>
-      <div class="players-list">
-        <div class="player-card" 
-             *ngFor="let player of group.players; let i = index"
-             [class.winner-selected]="isWinner(player, group.groupNumber)">
-          <div class="player-position">{{ i + 1 }}</div>
-          <div class="player-info">
-            <h3>
-              {{ player.playerName }}
-              <span class="winner-badge" *ngIf="isWinner(player, group.groupNumber)">🏆 Winner</span>
-            </h3>
-            <div class="player-details">
-              <p><strong>Deck:</strong> {{ player.deckName }}</p>
-              <p><strong>Commander:</strong> {{ player.commander }}</p>
-              <p><strong>Discord:</strong> {{ player.discordUsername }}</p>
-            </div>
-          </div>
-          <div class="player-actions">
-            <button class="winner-btn" 
-                    [class.selected]="isWinner(player, group.groupNumber)"
-                    (click)="selectWinner(player, group.groupNumber)" 
-                    [title]="isWinner(player, group.groupNumber) ? 'Remove winner status' : 'Select as winner'">
-              {{ isWinner(player, group.groupNumber) ? '✓ Winner' : '👑 Winner' }}
-            </button>
-            <div class="player-points">
-              <span class="points-label">Points</span>
-              <span class="points-value">{{ player.points }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Winners Group -->
-  <div class="winners-section" *ngIf="!isLoading && winnersGroup">
-    <div class="winners-header">
-      <h2>🏆 Winners Bracket</h2>
-      <p>{{ winnersGroup.players.length }} winners advancing to the next round</p>
-    </div>
-    
-    <div class="winners-container">
-      <div class="group-card winners-group">
-        <div class="group-header winners-group-header">
-          <h2>Winners Pod</h2>
-          <span class="player-count">{{ winnersGroup.players.length }} Players</span>
+      <div class="group-card" *ngFor="let group of groups">
+        <div class="group-header">
+          <h2>Pod {{ group.groupNumber }}</h2>
+          <span class="player-count">{{ group.players.length }} Players</span>
         </div>
         <div class="players-list">
-          <div class="player-card" *ngFor="let player of winnersGroup.players; let i = index"
-               [class.winner-selected]="isWinnersPodWinner(player)">
-            <div class="player-position winner-position">{{ i + 1 }}</div>
+          <div class="player-card" *ngFor="let player of group.players; let i = index"
+            [class.winner-selected]="isWinner(player, group.groupNumber)">
+            <div class="player-position">{{ i + 1 }}</div>
             <div class="player-info">
               <h3>
                 {{ player.playerName }}
-                <span class="champion-badge">🏆</span>
-                <span class="winner-badge" *ngIf="isWinnersPodWinner(player)">Champion</span>
+                <span class="winner-badge" *ngIf="isWinner(player, group.groupNumber)">🏆 Winner</span>
               </h3>
               <div class="player-details">
                 <p><strong>Deck:</strong> {{ player.deckName }}</p>
@@ -152,11 +125,10 @@
               </div>
             </div>
             <div class="player-actions">
-              <button class="winner-btn"
-                      [class.selected]="isWinnersPodWinner(player)"
-                      (click)="selectWinnersPodWinner(player)"
-                      [title]="isWinnersPodWinner(player) ? 'Remove winners pod champion' : 'Declare winners pod champion'">
-                {{ isWinnersPodWinner(player) ? '✓ Champion' : '👑 Champion' }}
+              <button class="winner-btn" [class.selected]="isWinner(player, group.groupNumber)"
+                (click)="selectWinner(player, group.groupNumber)"
+                [title]="isWinner(player, group.groupNumber) ? 'Remove winner status' : 'Select as winner'">
+                {{ isWinner(player, group.groupNumber) ? '✓ Winner' : '👑 Winner' }}
               </button>
               <div class="player-points">
                 <span class="points-label">Points</span>
@@ -167,11 +139,56 @@
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="empty-state" *ngIf="!isLoading && groups.length === 0 && !errorMessage">
-    <p>No players signed up yet.</p>
-    <a href="#/sign-up">Go to Sign-Up Page</a>
-  </div>
+    <!-- Winners Group -->
+    <div class="winners-section" *ngIf="!isLoading && winnersGroup">
+      <div class="winners-header">
+        <h2>🏆 Winners Bracket</h2>
+        <p>{{ winnersGroup.players.length }} winners advancing to the next round</p>
+      </div>
+
+      <div class="winners-container">
+        <div class="group-card winners-group">
+          <div class="group-header winners-group-header">
+            <h2>Winners Pod</h2>
+            <span class="player-count">{{ winnersGroup.players.length }} Players</span>
+          </div>
+          <div class="players-list">
+            <div class="player-card" *ngFor="let player of winnersGroup.players; let i = index"
+              [class.winner-selected]="isWinnersPodWinner(player)">
+              <div class="player-position winner-position">{{ i + 1 }}</div>
+              <div class="player-info">
+                <h3>
+                  {{ player.playerName }}
+                  <span class="champion-badge">🏆</span>
+                  <span class="winner-badge" *ngIf="isWinnersPodWinner(player)">Champion</span>
+                </h3>
+                <div class="player-details">
+                  <p><strong>Deck:</strong> {{ player.deckName }}</p>
+                  <p><strong>Commander:</strong> {{ player.commander }}</p>
+                  <p><strong>Discord:</strong> {{ player.discordUsername }}</p>
+                </div>
+              </div>
+              <div class="player-actions">
+                <button class="winner-btn" [class.selected]="isWinnersPodWinner(player)"
+                  (click)="selectWinnersPodWinner(player)"
+                  [title]="isWinnersPodWinner(player) ? 'Remove winners pod champion' : 'Declare winners pod champion'">
+                  {{ isWinnersPodWinner(player) ? '✓ Champion' : '👑 Champion' }}
+                </button>
+                <div class="player-points">
+                  <span class="points-label">Points</span>
+                  <span class="points-value">{{ player.points }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && groups.length === 0 && !errorMessage">
+      <p>No players signed up yet.</p>
+      <a href="#/sign-up">Go to Sign-Up Page</a>
+    </div>
   </div>
 </div>

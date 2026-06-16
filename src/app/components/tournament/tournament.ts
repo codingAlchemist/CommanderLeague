@@ -2,6 +2,7 @@ import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
+import { CurrentPlayerRankings } from '../current-player-rankings/current-player-rankings';
 
 interface Player {
   id: string;
@@ -27,14 +28,14 @@ interface WeekState {
 
 @Component({
   selector: 'app-tournament',
-  imports: [CommonModule],
+  imports: [CommonModule, CurrentPlayerRankings],
   templateUrl: './tournament.html',
   styleUrl: './tournament.scss',
 })
 export class Tournament implements OnInit {
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
-  
+
   players: Player[] = [];
   groups: PlayerGroup[] = [];
   groupWinners = new Map<number, Player>(); // Track winner per group
@@ -42,10 +43,12 @@ export class Tournament implements OnInit {
   winnersPodWinnerId: string | null = null;
   allSignups: Player[] = [];
   showSignups = false;
+  showRankings = false;
   isLoading = false;
   isLoadingSignups = false;
   isLoadingWeekState = false;
   isStartingWeek = false;
+  isResettingWeeks = false;
   errorMessage = '';
   readonly minWinnersBracketSize = 3;
   readonly maxWinnersBracketSize = 4;
@@ -53,7 +56,7 @@ export class Tournament implements OnInit {
   weekState: WeekState = {
     currentWeek: null,
     startedWeeks: [],
-    updatedAt: ''
+    updatedAt: '',
   };
 
   ngOnInit() {
@@ -65,7 +68,7 @@ export class Tournament implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     console.log('Loading started, isLoading:', this.isLoading);
-    
+
     this.http.get<Player[]>('/api/groups/random').subscribe({
       next: (players) => {
         console.log('Received players:', players);
@@ -81,7 +84,7 @@ export class Tournament implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
         console.log('Error occurred, isLoading:', this.isLoading);
-      }
+      },
     });
   }
 
@@ -117,7 +120,7 @@ export class Tournament implements OnInit {
 
       this.groups.push({
         groupNumber: groupIndex + 1,
-        players: groupPlayers
+        players: groupPlayers,
       });
 
       startIndex += currentGroupSize;
@@ -138,7 +141,11 @@ export class Tournament implements OnInit {
     const groupHasWinner = !!originalWinner;
 
     // Only allow creating new winners while there is room in the bracket.
-    if (!isCurrentWinner && !groupHasWinner && this.groupWinners.size >= this.maxWinnersBracketSize) {
+    if (
+      !isCurrentWinner &&
+      !groupHasWinner &&
+      this.groupWinners.size >= this.maxWinnersBracketSize
+    ) {
       this.errorMessage = `Winners bracket can only have ${this.maxWinnersBracketSize} players.`;
       return;
     }
@@ -150,7 +157,7 @@ export class Tournament implements OnInit {
     if (originalWinner) {
       originalPointsByPlayerId.set(originalWinner.id, originalWinner.points);
     }
-    
+
     if (isCurrentWinner) {
       // Unselecting winner removes the winner point for this game.
       player.points = Math.max(0, player.points - 1);
@@ -165,43 +172,47 @@ export class Tournament implements OnInit {
       player.points += 1;
       this.groupWinners.set(groupNumber, player);
     }
-    
+
     this.updateWinnersGroup();
 
-    const pointUpdates: Array<{ id: string; points: number }> = [{ id: player.id, points: player.points }];
+    const pointUpdates: Array<{ id: string; points: number }> = [
+      { id: player.id, points: player.points },
+    ];
     if (originalWinner && originalWinner.id !== player.id) {
       pointUpdates.push({ id: originalWinner.id, points: originalWinner.points });
     }
-    
+
     forkJoin(
-      pointUpdates.map(update =>
+      pointUpdates.map((update) =>
         this.http.patch(`/api/signups/${update.id}/points`, { points: update.points })
       )
     ).subscribe({
-        next: () => {
-          console.log('Updated winner points for group', groupNumber);
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('Failed to update points:', error);
+      next: () => {
+        console.log('Updated winner points for group', groupNumber);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to update points:', error);
 
-          for (const [playerId, originalPoints] of originalPointsByPlayerId.entries()) {
-            const affectedPlayer = this.players.find(currentPlayer => currentPlayer.id === playerId);
-            if (affectedPlayer) {
-              affectedPlayer.points = originalPoints;
-            }
+        for (const [playerId, originalPoints] of originalPointsByPlayerId.entries()) {
+          const affectedPlayer = this.players.find(
+            (currentPlayer) => currentPlayer.id === playerId
+          );
+          if (affectedPlayer) {
+            affectedPlayer.points = originalPoints;
           }
-
-          if (originalWinner) {
-            this.groupWinners.set(groupNumber, originalWinner);
-          } else {
-            this.groupWinners.delete(groupNumber);
-          }
-
-          this.updateWinnersGroup();
-          this.cdr.detectChanges();
         }
-      });
+
+        if (originalWinner) {
+          this.groupWinners.set(groupNumber, originalWinner);
+        } else {
+          this.groupWinners.delete(groupNumber);
+        }
+
+        this.updateWinnersGroup();
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   updateWinnersGroup() {
@@ -209,17 +220,20 @@ export class Tournament implements OnInit {
       .sort(([groupA], [groupB]) => groupA - groupB)
       .map(([, winner]) => winner)
       .slice(0, this.maxWinnersBracketSize);
-    
+
     if (winners.length >= this.minWinnersBracketSize) {
       this.winnersGroup = {
         groupNumber: 0, // Special number for winners group
-        players: winners
+        players: winners,
       };
     } else {
       this.winnersGroup = null;
     }
 
-    if (!this.winnersGroup || !this.winnersGroup.players.some(player => player.id === this.winnersPodWinnerId)) {
+    if (
+      !this.winnersGroup ||
+      !this.winnersGroup.players.some((player) => player.id === this.winnersPodWinnerId)
+    ) {
       this.winnersPodWinnerId = null;
     }
   }
@@ -237,15 +251,23 @@ export class Tournament implements OnInit {
   }
 
   toggleSignups() {
+    // ensure rankings view is cleared when showing signups
+    this.showRankings = false;
     this.showSignups = !this.showSignups;
     if (this.showSignups && this.allSignups.length === 0) {
       this.loadAllSignups();
     }
   }
 
+  toggleRankings() {
+    // Show or hide the rankings view and clear signups view when activating rankings
+    this.showSignups = false;
+    this.showRankings = !this.showRankings;
+  }
+
   loadAllSignups() {
     this.isLoadingSignups = true;
-    
+
     this.http.get<Player[]>('/api/signups').subscribe({
       next: (signups) => {
         this.allSignups = signups.sort((a, b) => b.points - a.points);
@@ -256,7 +278,7 @@ export class Tournament implements OnInit {
         console.error('Failed to load signups:', error);
         this.isLoadingSignups = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
@@ -274,7 +296,34 @@ export class Tournament implements OnInit {
         this.errorMessage = 'Failed to load week progress';
         this.isLoadingWeekState = false;
         this.cdr.detectChanges();
-      }
+      },
+    });
+  }
+
+  resetWeeks() {
+    if (this.isResettingWeeks) {
+      return;
+    }
+
+    const shouldReset = confirm('Reset all weeks and clear started status?');
+    if (!shouldReset) {
+      return;
+    }
+
+    this.isResettingWeeks = true;
+    this.http.post<WeekState>('/api/week-state/reset', {}).subscribe({
+      next: (state) => {
+        // After resetting on the server, reload the authoritative week state
+        this.loadWeekState();
+        this.isResettingWeeks = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to reset week state:', error);
+        this.errorMessage = 'Failed to reset weeks';
+        this.isResettingWeeks = false;
+        this.cdr.detectChanges();
+      },
     });
   }
 
@@ -283,26 +332,49 @@ export class Tournament implements OnInit {
       return;
     }
 
-    const shouldStart = confirm(`Start Week ${week}?`);
-    if (!shouldStart) {
+    const alreadyStarted = this.isWeekStarted(week);
+    const action = alreadyStarted ? 'End' : 'Start';
+    const shouldProceed = confirm(`${action} Week ${week}?`);
+    if (!shouldProceed) {
       return;
     }
 
     this.isStartingWeek = true;
 
-    this.http.put<WeekState>('/api/week-state/current', { week }).subscribe({
-      next: (state) => {
-        this.weekState = state;
-        this.isStartingWeek = false;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error('Failed to start week:', error);
-        this.errorMessage = 'Failed to start week';
-        this.isStartingWeek = false;
-        this.cdr.detectChanges();
-      }
-    });
+    // Compute new week state to send to server
+    let newStartedWeeks: number[];
+    let newCurrentWeek: number | null;
+
+    if (alreadyStarted) {
+      // Ending the week: remove it from startedWeeks and clear currentWeek if it was this week
+      newStartedWeeks = this.weekState.startedWeeks.filter((w) => w !== week);
+      newCurrentWeek = this.weekState.currentWeek === week ? null : this.weekState.currentWeek;
+    } else {
+      // Starting the week: add to startedWeeks and set as currentWeek
+      newStartedWeeks = Array.from(new Set([...this.weekState.startedWeeks, week])).sort(
+        (a, b) => a - b
+      );
+      newCurrentWeek = week;
+    }
+
+    this.http
+      .patch<WeekState>('/api/week-state', {
+        currentWeek: newCurrentWeek,
+        startedWeeks: newStartedWeeks,
+      })
+      .subscribe({
+        next: (state) => {
+          this.weekState = state;
+          this.isStartingWeek = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Failed to update week state:', error);
+          this.errorMessage = `Failed to ${alreadyStarted ? 'end' : 'start'} week`;
+          this.isStartingWeek = false;
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   isWeekStarted(week: number): boolean {

@@ -145,6 +145,38 @@
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #f8fafc;
   box-shadow: 0 4px 18px rgba(15, 23, 42, 0.25);
+
+  .week-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .reset-weeks-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(180deg, #1f2937, #111827);
+    border: 1px solid rgba(255,255,255,0.06);
+    color: #e6eef8;
+    padding: 0.45rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+  }
+
+  .reset-weeks-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .reset-weeks-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(2,6,23,0.75);
+  }
 }
 
 .week-progress-header {
@@ -642,7 +674,7 @@
   .player-card {
     flex-wrap: wrap;
     padding: 0.75rem;
-    
+
     &.winner-selected {
       flex-wrap: wrap;
     }
@@ -692,7 +724,7 @@
 
   .player-points {
     padding: 0.4rem 0.75rem;
-    
+
     .points-label {
       font-size: 0.7rem;
     }
