@@ -1,0 +1,47 @@
+<section class="admin-login-page">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>Admin Login</mat-card-title>
+      <mat-card-subtitle>Sign in to manage the league portal</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form class="login-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Admin Email</mat-label>
+          <input matInput formControlName="email" type="email" autocomplete="email" required />
+          @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+          <mat-error>Email is required.</mat-error>
+          }
+          @if (loginForm.controls.email.touched && loginForm.controls.email.hasError('email')) {
+          <mat-error>Enter a valid email address.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input matInput formControlName="password" [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="current-password" required />
+          <button mat-button matSuffix type="button" (click)="togglePasswordVisibility()">
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+          @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
+          <mat-error>Password is required.</mat-error>
+          }
+          @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('minlength')) {
+          <mat-error>Password must be at least 8 characters.</mat-error>
+          }
+        </mat-form-field>
+
+        <button class="submit-button" mat-flat-button color="primary" type="submit"
+          [disabled]="loginForm.invalid || isSubmitting()">
+          {{ isSubmitting() ? 'Signing In...' : 'Sign In' }}
+        </button>
+      </form>
+
+      @if (statusMessage()) {
+      <p class="status-message" aria-live="polite">{{ statusMessage() }}</p>
+      }
+    </mat-card-content>
+  </mat-card>
+</section>

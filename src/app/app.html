@@ -1,7 +1,14 @@
 <main class="app-shell">
 	<nav class="tabs" aria-label="Main navigation">
-		<a routerLink="/tournament" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tournament</a>
 		<a routerLink="/sign-up" routerLinkActive="active">Sign Up Sheet</a>
+		@if (adminAuthService.isAdmin()) {
+		<a routerLink="/tournament" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tournament</a>
+		<a routerLink="/rankings" routerLinkActive="active">Rankings</a>
+		}
+		<a routerLink="/admin-login" routerLinkActive="active">Admin Login</a>
+		@if (adminAuthService.isAdmin()) {
+		<button type="button" class="logout-button" (click)="logout()">Logout</button>
+		}
 	</nav>
 
 	<section class="page-content">

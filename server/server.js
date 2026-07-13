@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
+const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
 
 // Middleware
 app.use(cors({
@@ -43,6 +44,16 @@ async function ensureDataDirectory() {
       updatedAt: new Date().toISOString()
     };
     await fs.writeFile(WEEK_STATE_FILE, JSON.stringify(initialWeekState, null, 2));
+  }
+
+  try {
+    await fs.access(ADMIN_CREDENTIALS_FILE);
+  } catch {
+    const initialAdminCredentials = {
+      username: 'jason.debottis@gmail.com',
+      password: 'Area51Admin'
+    };
+    await fs.writeFile(ADMIN_CREDENTIALS_FILE, JSON.stringify(initialAdminCredentials, null, 2));
   }
 }
 
@@ -98,7 +109,48 @@ async function writeWeekState(weekState) {
   }
 }
 
+async function readAdminCredentials() {
+  const data = await fs.readFile(ADMIN_CREDENTIALS_FILE, 'utf8');
+  const parsed = JSON.parse(data);
+
+  if (typeof parsed.username !== 'string' || typeof parsed.password !== 'string') {
+    throw new Error('Admin credentials file is invalid');
+  }
+
+  return {
+    username: parsed.username,
+    password: parsed.password
+  };
+}
+
 // Routes
+
+// Admin login
+app.post('/api/admin/login', async (req, res) => {
+  const { username, password } = req.body || {};
+
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+
+  let adminCredentials;
+  try {
+    adminCredentials = await readAdminCredentials();
+  } catch (error) {
+    console.error('Error reading admin credentials:', error);
+    return res.status(500).json({ error: 'Failed to validate admin credentials' });
+  }
+
+  const normalizedUsername = username.trim().toLowerCase();
+  const isValidUsername = normalizedUsername === adminCredentials.username.trim().toLowerCase();
+  const isValidPassword = password === adminCredentials.password;
+
+  if (!isValidUsername || !isValidPassword) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  return res.json({ authenticated: true, isAdmin: true });
+});
 
 // Get precons
 app.get('/api/precons', async (req, res) => {
