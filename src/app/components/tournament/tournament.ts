@@ -23,6 +23,7 @@ interface PlayerGroup {
 interface WeekState {
   currentWeek: number | null;
   startedWeeks: number[];
+  totalWeeks: number;
   updatedAt: string;
 }
 
@@ -41,6 +42,7 @@ export class Tournament implements OnInit {
   groupWinners = new Map<number, Player>(); // Track winner per group
   winnersGroup: PlayerGroup | null = null;
   winnersPodWinnerId: string | null = null;
+  isWinnersBracketEnabled = false;
   allSignups: Player[] = [];
   showSignups = false;
   showRankings = false;
@@ -49,13 +51,17 @@ export class Tournament implements OnInit {
   isLoadingWeekState = false;
   isStartingWeek = false;
   isResettingWeeks = false;
+  isAdjustingWeeks = false;
   errorMessage = '';
   readonly minWinnersBracketSize = 3;
   readonly maxWinnersBracketSize = 4;
-  readonly weeks = [1, 2, 3, 4, 5, 6, 7, 8];
+  readonly minTotalWeeks = 1;
+  readonly maxTotalWeeks = 10;
+  weeks: number[] = [1, 2, 3, 4, 5, 6, 7, 8];
   weekState: WeekState = {
     currentWeek: null,
     startedWeeks: [],
+    totalWeeks: 8,
     updatedAt: '',
   };
 
@@ -184,8 +190,8 @@ export class Tournament implements OnInit {
 
     forkJoin(
       pointUpdates.map((update) =>
-        this.http.patch(`/api/signups/${update.id}/points`, { points: update.points })
-      )
+        this.http.patch(`/api/signups/${update.id}/points`, { points: update.points }),
+      ),
     ).subscribe({
       next: () => {
         console.log('Updated winner points for group', groupNumber);
@@ -196,7 +202,7 @@ export class Tournament implements OnInit {
 
         for (const [playerId, originalPoints] of originalPointsByPlayerId.entries()) {
           const affectedPlayer = this.players.find(
-            (currentPlayer) => currentPlayer.id === playerId
+            (currentPlayer) => currentPlayer.id === playerId,
           );
           if (affectedPlayer) {
             affectedPlayer.points = originalPoints;
@@ -216,6 +222,12 @@ export class Tournament implements OnInit {
   }
 
   updateWinnersGroup() {
+    if (!this.isWinnersBracketEnabled) {
+      this.winnersGroup = null;
+      this.winnersPodWinnerId = null;
+      return;
+    }
+
     const winners = Array.from(this.groupWinners.entries())
       .sort(([groupA], [groupB]) => groupA - groupB)
       .map(([, winner]) => winner)
@@ -248,6 +260,18 @@ export class Tournament implements OnInit {
 
   isWinnersPodWinner(player: Player): boolean {
     return this.winnersPodWinnerId === player.id;
+  }
+
+  toggleWinnersBracket(): void {
+    this.isWinnersBracketEnabled = !this.isWinnersBracketEnabled;
+    this.updateWinnersGroup();
+  }
+
+  get canCreateWinnersBracket(): boolean {
+    return (
+      this.groupWinners.size >= this.minWinnersBracketSize &&
+      this.groupWinners.size <= this.maxWinnersBracketSize
+    );
   }
 
   toggleSignups() {
@@ -288,6 +312,7 @@ export class Tournament implements OnInit {
     this.http.get<WeekState>('/api/week-state').subscribe({
       next: (state) => {
         this.weekState = state;
+        this.refreshWeeks(state.totalWeeks);
         this.isLoadingWeekState = false;
         this.cdr.detectChanges();
       },
@@ -352,7 +377,7 @@ export class Tournament implements OnInit {
     } else {
       // Starting the week: add to startedWeeks and set as currentWeek
       newStartedWeeks = Array.from(new Set([...this.weekState.startedWeeks, week])).sort(
-        (a, b) => a - b
+        (a, b) => a - b,
       );
       newCurrentWeek = week;
     }
@@ -375,6 +400,37 @@ export class Tournament implements OnInit {
           this.cdr.detectChanges();
         },
       });
+  }
+
+  adjustWeeks(delta: 1 | -1): void {
+    if (this.isAdjustingWeeks) {
+      return;
+    }
+
+    this.isAdjustingWeeks = true;
+
+    this.http.patch<WeekState>('/api/week-state/total-weeks', { delta }).subscribe({
+      next: (state) => {
+        this.weekState = state;
+        this.refreshWeeks(state.totalWeeks);
+        this.isAdjustingWeeks = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to adjust total weeks:', error);
+        this.errorMessage = 'Failed to update number of weeks';
+        this.isAdjustingWeeks = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private refreshWeeks(totalWeeks: number): void {
+    const clampedTotalWeeks = Math.max(
+      this.minTotalWeeks,
+      Math.min(this.maxTotalWeeks, Math.floor(totalWeeks)),
+    );
+    this.weeks = Array.from({ length: clampedTotalWeeks }, (_, index) => index + 1);
   }
 
   isWeekStarted(week: number): boolean {

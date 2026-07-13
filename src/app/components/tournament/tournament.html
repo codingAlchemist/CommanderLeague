@@ -1,12 +1,12 @@
 <div class="tournament-container">
   <header class="tournament-header">
-    <h1>Commander Tournament Bracket</h1>
+    <h1>Commander Tournament</h1>
     <div class="header-actions">
       <button class="action-btn" (click)="toggleSignups()" [disabled]="isLoading">
         {{ showSignups ? '🎮 View Tournament' : '📋 View All Signups' }}
       </button>
-      <button class="action-btn" (click)="toggleRankings()" [disabled]="isLoading || players.length === 0"
-        [title]="players.length === 0 ? 'No players signed up' : (showRankings ? 'Hide Rankings' : 'View Rankings')">
+      <button class="action-btn" (click)="toggleRankings()" [disabled]="isLoading"
+        [title]="showRankings ? 'Hide Rankings' : 'View Rankings'">
         {{ showRankings ? '📊 Hide Rankings' : '📈 View Rankings' }}
       </button>
       <button class="shuffle-btn" (click)="shuffleGroups()" [disabled]="isLoading">
@@ -57,7 +57,7 @@
   </div>
 
   <!-- Rankings View -->
-  <div class="rankings-view" *ngIf="showRankings && !isLoading">
+  <div class="rankings-view" *ngIf="showRankings">
     <app-current-player-rankings></app-current-player-rankings>
   </div>
 
@@ -66,13 +66,24 @@
     <section class="week-progress" *ngIf="!isLoading">
       <div class="week-progress-header">
         <h2>League Weeks</h2>
+        <p *ngIf="!isLoadingWeekState">Total Weeks: {{ weekState.totalWeeks }}</p>
         <p *ngIf="!isLoadingWeekState && weekState.currentWeek">Current Week: {{ weekState.currentWeek }}</p>
         <p *ngIf="!isLoadingWeekState && !weekState.currentWeek">No week started yet</p>
         <p *ngIf="isLoadingWeekState">Loading week status...</p>
 
         <div class="week-actions">
+          <button class="adjust-weeks-btn" (click)="adjustWeeks(-1)"
+            [disabled]="isAdjustingWeeks || isLoadingWeekState || weekState.totalWeeks <= minTotalWeeks"
+            title="Remove one week">
+            - Remove Week
+          </button>
+          <button class="adjust-weeks-btn" (click)="adjustWeeks(1)"
+            [disabled]="isAdjustingWeeks || isLoadingWeekState || weekState.totalWeeks >= maxTotalWeeks"
+            title="Add one week">
+            + Add Week
+          </button>
           <button class="reset-weeks-btn" (click)="resetWeeks()"
-            [disabled]="isResettingWeeks || isLoadingWeekState || isStartingWeek"
+            [disabled]="isResettingWeeks || isLoadingWeekState || isStartingWeek || isAdjustingWeeks"
             title="Reset all weeks and clear started status">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true">
@@ -101,6 +112,15 @@
       <p><strong>Total Players:</strong> {{ players.length }}</p>
       <p><strong>Total Groups:</strong> {{ groups.length }}</p>
       <p><strong>Selected Winners:</strong> {{ groupWinners.size }} (Winners bracket requires 3-4 players)</p>
+      <div class="winners-bracket-controls">
+        <button type="button" class="winners-toggle-btn" [class.enabled]="isWinnersBracketEnabled"
+          (click)="toggleWinnersBracket()" [disabled]="!isWinnersBracketEnabled && !canCreateWinnersBracket">
+          {{ isWinnersBracketEnabled ? 'Hide Winners Bracket' : 'Create Winners Bracket' }}
+        </button>
+        <p class="winners-bracket-hint" *ngIf="!isWinnersBracketEnabled && !canCreateWinnersBracket">
+          Select 3-4 pod winners to enable winners bracket creation.
+        </p>
+      </div>
     </div>
 
     <div class="groups-container" *ngIf="!isLoading && groups.length > 0">

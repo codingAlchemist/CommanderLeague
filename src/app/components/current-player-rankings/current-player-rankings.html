@@ -1,7 +1,7 @@
 <section class="current-player-rankings">
   <header class="rankings-header">
     <h2>Current Player Rankings</h2>
-    <button type="button" class="refresh-btn" (click)="loadPlayers()" [disabled]="isLoading"
+    <button type="button" class="refresh-btn" (click)="loadPlayers(true)" [disabled]="isLoading"
       aria-label="Refresh rankings">
       <svg class="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -14,7 +14,13 @@
   </header>
 
   <div *ngIf="isLoading">Loading rankings…</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="error" class="error" role="alert" aria-live="assertive">
+    <p class="error-title">{{ error }}</p>
+    <p class="error-detail"><strong>Endpoint:</strong> {{ errorEndpoint || '/api/signups/ranked' }}</p>
+    <p class="error-detail" *ngIf="errorStatus !== null">
+      <strong>HTTP Status:</strong> {{ errorStatus }} {{ errorStatusText }}
+    </p>
+  </div>
 
   <table *ngIf="!isLoading && !error && displayedPlayers.length > 0" class="rankings-table">
     <thead>

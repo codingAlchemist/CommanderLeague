@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
+const DEFAULT_TOTAL_WEEKS = 8;
+const MIN_TOTAL_WEEKS = 1;
+const MAX_TOTAL_WEEKS = 10;
 
 // Middleware
 app.use(cors({
@@ -41,6 +44,7 @@ async function ensureDataDirectory() {
     const initialWeekState = {
       currentWeek: null,
       startedWeeks: [],
+      totalWeeks: DEFAULT_TOTAL_WEEKS,
       updatedAt: new Date().toISOString()
     };
     await fs.writeFile(WEEK_STATE_FILE, JSON.stringify(initialWeekState, null, 2));
@@ -83,11 +87,28 @@ async function readWeekState() {
     const data = await fs.readFile(WEEK_STATE_FILE, 'utf8');
     const parsed = JSON.parse(data);
 
+    const totalWeeks = Number.isInteger(parsed.totalWeeks)
+      ? Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, parsed.totalWeeks))
+      : DEFAULT_TOTAL_WEEKS;
+
+    const startedWeeks = Array.isArray(parsed.startedWeeks)
+      ? parsed.startedWeeks
+        .filter(week => Number.isInteger(week) && week > 0 && week <= totalWeeks)
+        .sort((a, b) => a - b)
+      : [];
+
+    const currentWeek =
+      typeof parsed.currentWeek === 'number' &&
+        Number.isInteger(parsed.currentWeek) &&
+        parsed.currentWeek > 0 &&
+        parsed.currentWeek <= totalWeeks
+        ? parsed.currentWeek
+        : null;
+
     return {
-      currentWeek: typeof parsed.currentWeek === 'number' ? parsed.currentWeek : null,
-      startedWeeks: Array.isArray(parsed.startedWeeks)
-        ? parsed.startedWeeks.filter(week => Number.isInteger(week) && week > 0)
-        : [],
+      currentWeek,
+      startedWeeks,
+      totalWeeks,
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString()
     };
   } catch (error) {
@@ -95,6 +116,7 @@ async function readWeekState() {
     return {
       currentWeek: null,
       startedWeeks: [],
+      totalWeeks: DEFAULT_TOTAL_WEEKS,
       updatedAt: new Date().toISOString()
     };
   }
@@ -128,8 +150,20 @@ async function readAdminCredentials() {
 // Admin login
 app.post('/api/admin/login', async (req, res) => {
   const { username, password } = req.body || {};
+  const requestIp = req.ip || req.socket?.remoteAddress || 'unknown';
+  const attemptedUsername = typeof username === 'string' ? username.trim().toLowerCase() : 'invalid';
+
+  console.info('Admin login attempt', {
+    username: attemptedUsername,
+    ip: requestIp,
+    timestamp: new Date().toISOString()
+  });
 
   if (typeof username !== 'string' || typeof password !== 'string') {
+    console.warn('Admin login rejected: missing credentials', {
+      username: attemptedUsername,
+      ip: requestIp
+    });
     return res.status(400).json({ error: 'Username and password are required' });
   }
 
@@ -138,6 +172,10 @@ app.post('/api/admin/login', async (req, res) => {
     adminCredentials = await readAdminCredentials();
   } catch (error) {
     console.error('Error reading admin credentials:', error);
+    console.error('Admin login failed: credentials source unavailable', {
+      username: attemptedUsername,
+      ip: requestIp
+    });
     return res.status(500).json({ error: 'Failed to validate admin credentials' });
   }
 
@@ -146,8 +184,18 @@ app.post('/api/admin/login', async (req, res) => {
   const isValidPassword = password === adminCredentials.password;
 
   if (!isValidUsername || !isValidPassword) {
+    console.warn('Admin login rejected: invalid credentials', {
+      username: normalizedUsername,
+      ip: requestIp
+    });
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+
+  console.info('Admin login successful', {
+    username: normalizedUsername,
+    ip: requestIp,
+    timestamp: new Date().toISOString()
+  });
 
   return res.json({ authenticated: true, isAdmin: true });
 });
@@ -202,16 +250,20 @@ app.put('/api/week-state/current', async (req, res) => {
   try {
     const { week } = req.body;
 
-    if (!Number.isInteger(week) || week < 1) {
-      return res.status(400).json({ error: 'Week must be a positive integer' });
+    const weekState = await readWeekState();
+
+    if (!Number.isInteger(week) || week < 1 || week > weekState.totalWeeks) {
+      return res.status(400).json({
+        error: `Week must be a positive integer between 1 and ${weekState.totalWeeks}`
+      });
     }
 
-    const weekState = await readWeekState();
     const startedWeeks = Array.from(new Set([...weekState.startedWeeks, week])).sort((a, b) => a - b);
 
     const updatedState = {
       currentWeek: week,
       startedWeeks,
+      totalWeeks: weekState.totalWeeks,
       updatedAt: new Date().toISOString()
     };
 
@@ -226,22 +278,29 @@ app.put('/api/week-state/current', async (req, res) => {
 // Patch week state (allow partial overwrite of currentWeek and startedWeeks)
 app.patch('/api/week-state', async (req, res) => {
   try {
-    const { currentWeek, startedWeeks } = req.body;
+    const { currentWeek, startedWeeks, totalWeeks } = req.body;
 
-    const validCurrentWeek = typeof currentWeek === 'number' && Number.isInteger(currentWeek) && currentWeek > 0
+    const validTotalWeeks = Number.isInteger(totalWeeks)
+      ? Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, totalWeeks))
+      : null;
+    const existingState = await readWeekState();
+    const resolvedTotalWeeks = validTotalWeeks ?? existingState.totalWeeks;
+
+    const validCurrentWeek = typeof currentWeek === 'number' && Number.isInteger(currentWeek) && currentWeek > 0 && currentWeek <= resolvedTotalWeeks
       ? currentWeek
       : null;
 
     const validStartedWeeks = Array.isArray(startedWeeks)
       ? startedWeeks
         .map(w => parseInt(w, 10))
-        .filter(w => Number.isInteger(w) && w > 0)
+        .filter(w => Number.isInteger(w) && w > 0 && w <= resolvedTotalWeeks)
         .sort((a, b) => a - b)
       : [];
 
     const updatedState = {
       currentWeek: validCurrentWeek,
       startedWeeks: validStartedWeeks,
+      totalWeeks: resolvedTotalWeeks,
       updatedAt: new Date().toISOString()
     };
 
@@ -256,9 +315,11 @@ app.patch('/api/week-state', async (req, res) => {
 // Reset the current week and started weeks
 app.post('/api/week-state/reset', async (req, res) => {
   try {
+    const existingState = await readWeekState();
     const resetState = {
       currentWeek: null,
       startedWeeks: [],
+      totalWeeks: existingState.totalWeeks,
       updatedAt: new Date().toISOString()
     };
 
@@ -275,11 +336,14 @@ app.post('/api/week-state/toggle', async (req, res) => {
   try {
     const { week } = req.body;
 
-    if (!Number.isInteger(week) || week < 1) {
-      return res.status(400).json({ error: 'Week must be a positive integer' });
+    const weekState = await readWeekState();
+
+    if (!Number.isInteger(week) || week < 1 || week > weekState.totalWeeks) {
+      return res.status(400).json({
+        error: `Week must be a positive integer between 1 and ${weekState.totalWeeks}`
+      });
     }
 
-    const weekState = await readWeekState();
     const started = new Set(weekState.startedWeeks);
     let updatedCurrentWeek = weekState.currentWeek;
 
@@ -298,6 +362,7 @@ app.post('/api/week-state/toggle', async (req, res) => {
     const updatedState = {
       currentWeek: updatedCurrentWeek,
       startedWeeks: Array.from(started).sort((a, b) => a - b),
+      totalWeeks: weekState.totalWeeks,
       updatedAt: new Date().toISOString()
     };
 
@@ -306,6 +371,42 @@ app.post('/api/week-state/toggle', async (req, res) => {
   } catch (error) {
     console.error('Error toggling week state:', error);
     res.status(500).json({ error: 'Failed to toggle week state' });
+  }
+});
+
+// Adjust total number of weeks in league schedule
+app.patch('/api/week-state/total-weeks', async (req, res) => {
+  try {
+    const { delta } = req.body;
+
+    if (!Number.isInteger(delta) || ![-1, 1].includes(delta)) {
+      return res.status(400).json({ error: 'Delta must be either 1 or -1' });
+    }
+
+    const weekState = await readWeekState();
+    const updatedTotalWeeks = Math.max(
+      MIN_TOTAL_WEEKS,
+      Math.min(MAX_TOTAL_WEEKS, weekState.totalWeeks + delta)
+    );
+
+    const updatedStartedWeeks = weekState.startedWeeks.filter((week) => week <= updatedTotalWeeks);
+    const updatedCurrentWeek =
+      weekState.currentWeek !== null && weekState.currentWeek <= updatedTotalWeeks
+        ? weekState.currentWeek
+        : null;
+
+    const updatedState = {
+      currentWeek: updatedCurrentWeek,
+      startedWeeks: updatedStartedWeeks,
+      totalWeeks: updatedTotalWeeks,
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeWeekState(updatedState);
+    res.json(updatedState);
+  } catch (error) {
+    console.error('Error adjusting total weeks:', error);
+    res.status(500).json({ error: 'Failed to adjust total weeks' });
   }
 });
 

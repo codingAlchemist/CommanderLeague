@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, Input } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 
 interface Player {
@@ -19,7 +19,12 @@ interface Player {
   styleUrl: './current-player-rankings.scss',
 })
 export class CurrentPlayerRankings implements OnInit {
+  private static cachedPlayers: Player[] | null = null;
+  private static cacheTimestamp = 0;
+
   private http = inject(HttpClient);
+  private readonly rankingsEndpoint = '/api/signups/ranked';
+  private readonly rankingsCacheTtlMs = 60_000;
 
   // Parent can pass a pre-fetched list. If null, this component will fetch itself.
   @Input() players: Player[] | null = null;
@@ -27,6 +32,9 @@ export class CurrentPlayerRankings implements OnInit {
   private internalPlayers: Player[] = [];
   isLoading = false;
   error = '';
+  errorStatus: number | null = null;
+  errorStatusText = '';
+  errorEndpoint = '';
 
   ngOnInit() {
     // Only auto-load if parent did not provide players
@@ -39,19 +47,46 @@ export class CurrentPlayerRankings implements OnInit {
     return this.players !== null ? this.players : this.internalPlayers;
   }
 
-  loadPlayers() {
-    this.isLoading = true;
+  loadPlayers(forceRefresh = false) {
+    const hasFreshCache =
+      !forceRefresh &&
+      CurrentPlayerRankings.cachedPlayers !== null &&
+      Date.now() - CurrentPlayerRankings.cacheTimestamp < this.rankingsCacheTtlMs;
+
+    // Render cached rankings instantly, then refresh in the background.
+    if (hasFreshCache) {
+      this.internalPlayers = CurrentPlayerRankings.cachedPlayers!.slice();
+      this.isLoading = false;
+    } else {
+      this.isLoading = true;
+    }
+
     this.error = '';
+    this.errorStatus = null;
+    this.errorStatusText = '';
+    this.errorEndpoint = '';
 
     // Use the ranked endpoint to get players already sorted by points
-    this.http.get<Player[]>('/api/signups/ranked').subscribe({
+    this.http.get<Player[]>(this.rankingsEndpoint).subscribe({
       next: (data) => {
         this.internalPlayers = data?.slice() || [];
+        CurrentPlayerRankings.cachedPlayers = this.internalPlayers.slice();
+        CurrentPlayerRankings.cacheTimestamp = Date.now();
         this.isLoading = false;
       },
-      error: (err) => {
+      error: (err: unknown) => {
         console.error('Failed to load player rankings:', err);
-        this.error = 'Failed to load player rankings';
+
+        if (err instanceof HttpErrorResponse) {
+          this.error = 'Failed to load player rankings from the server.';
+          this.errorStatus = err.status;
+          this.errorStatusText = err.statusText || 'Unknown Error';
+          this.errorEndpoint = this.rankingsEndpoint;
+        } else {
+          this.error = 'Failed to load player rankings due to an unexpected error.';
+          this.errorEndpoint = this.rankingsEndpoint;
+        }
+
         this.isLoading = false;
       },
     });
