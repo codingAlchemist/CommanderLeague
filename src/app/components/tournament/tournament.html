@@ -52,6 +52,11 @@
           <span class="points-label">Points</span>
           <span class="points-value">{{ player.points }}</span>
         </div>
+        <div class="signup-actions">
+          <button class="drop-btn" (click)="dropPlayer(player.id)" [disabled]="isLoadingSignups">
+            🗑️ Drop
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -121,6 +126,10 @@
           Select 3-4 pod winners to enable winners bracket creation.
         </p>
       </div>
+    </div>
+
+    <div class="no-pods-note" *ngIf="!isLoading && weekState.currentWeek !== null && groups.length === 0">
+      <p>No pods have been created for Week {{ weekState.currentWeek }} yet. Click "🔄 Shuffle Groups" to generate and persist pods for this week.</p>
     </div>
 
     <div class="groups-container" *ngIf="!isLoading && groups.length > 0">

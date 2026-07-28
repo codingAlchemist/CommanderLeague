@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
+const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
 const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
 const DEFAULT_TOTAL_WEEKS = 8;
 const MIN_TOTAL_WEEKS = 1;
@@ -58,6 +59,12 @@ async function ensureDataDirectory() {
       password: 'Area51Admin'
     };
     await fs.writeFile(ADMIN_CREDENTIALS_FILE, JSON.stringify(initialAdminCredentials, null, 2));
+  }
+
+  try {
+    await fs.access(PODS_FILE);
+  } catch {
+    await fs.writeFile(PODS_FILE, JSON.stringify([], null, 2));
   }
 }
 
@@ -131,6 +138,85 @@ async function writeWeekState(weekState) {
   }
 }
 
+// Read pods from file
+async function readPods() {
+  try {
+    const data = await fs.readFile(PODS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error reading pods:', error);
+    return [];
+  }
+}
+
+// Write pods to file
+async function writePods(pods) {
+  try {
+    await fs.writeFile(PODS_FILE, JSON.stringify(pods, null, 2));
+  } catch (error) {
+    console.error('Error writing pods:', error);
+    throw error;
+  }
+}
+
+// Create pods (groupings) for a specific week from current signups
+async function createPodsForWeek(week) {
+  const signups = await readSignups();
+  const totalPlayers = signups.length;
+
+  const minGroupSize = 3;
+  const maxGroupSize = 4;
+  const minGroups = Math.ceil(totalPlayers / maxGroupSize);
+  const maxGroups = Math.floor(totalPlayers / minGroupSize);
+
+  if (totalPlayers === 0) {
+    return { week, groups: [], createdAt: new Date().toISOString() };
+  }
+
+  if (minGroups > maxGroups) {
+    throw new Error(`Cannot create groups with ${minGroupSize}-${maxGroupSize} players each from ${totalPlayers} players.`);
+  }
+
+  const groupCount = minGroups;
+  const baseSize = Math.floor(totalPlayers / groupCount);
+  const groupsWithExtraPlayer = totalPlayers % groupCount;
+
+  const shuffled = shuffleArray([...signups]);
+
+  const groups = [];
+  let startIndex = 0;
+  for (let groupIndex = 0; groupIndex < groupCount; groupIndex++) {
+    const currentGroupSize = baseSize + (groupIndex < groupsWithExtraPlayer ? 1 : 0);
+    const groupPlayers = shuffled.slice(startIndex, startIndex + currentGroupSize);
+
+    groups.push({
+      groupNumber: groupIndex + 1,
+      players: groupPlayers
+    });
+
+    startIndex += currentGroupSize;
+  }
+
+  return { week, groups, createdAt: new Date().toISOString() };
+}
+
+// Ensure pods exist for a given week; create them if missing
+async function ensurePodsForWeek(week) {
+  try {
+    const pods = await readPods();
+    const existing = pods.find((p) => p.week === week);
+    if (existing) return existing;
+
+    const newPod = await createPodsForWeek(week);
+    pods.push(newPod);
+    await writePods(pods);
+    return newPod;
+  } catch (error) {
+    console.error('Error ensuring pods for week:', error);
+    throw error;
+  }
+}
+
 async function readAdminCredentials() {
   const data = await fs.readFile(ADMIN_CREDENTIALS_FILE, 'utf8');
   const parsed = JSON.parse(data);
@@ -146,6 +232,38 @@ async function readAdminCredentials() {
 }
 
 // Routes
+
+// Server-Sent Events clients
+const sseClients = new Set();
+
+function sendSseEvent(event, data) {
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+  for (const res of sseClients) {
+    try {
+      res.write(payload);
+    } catch (err) {
+      console.error('Failed to write SSE to client, removing:', err);
+      sseClients.delete(res);
+    }
+  }
+}
+
+app.get('/api/events', (req, res) => {
+  // SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders && res.flushHeaders();
+
+  // Keep connection open
+  res.write('\n');
+
+  sseClients.add(res);
+
+  req.on('close', () => {
+    sseClients.delete(res);
+  });
+});
 
 // Admin login
 app.post('/api/admin/login', async (req, res) => {
@@ -268,6 +386,12 @@ app.put('/api/week-state/current', async (req, res) => {
     };
 
     await writeWeekState(updatedState);
+    // Ensure pods exist for the week when it's set as current
+    try {
+      await ensurePodsForWeek(week);
+    } catch (err) {
+      console.error('Failed to ensure pods for current week:', err);
+    }
     res.json(updatedState);
   } catch (error) {
     console.error('Error updating week state:', error);
@@ -305,6 +429,16 @@ app.patch('/api/week-state', async (req, res) => {
     };
 
     await writeWeekState(updatedState);
+    // Ensure pods exist for any started weeks
+    try {
+      for (const w of updatedState.startedWeeks) {
+        // create pods if they don't already exist
+        // eslint-disable-next-line no-await-in-loop
+        await ensurePodsForWeek(w);
+      }
+    } catch (err) {
+      console.error('Failed to ensure pods for started weeks:', err);
+    }
     res.json(updatedState);
   } catch (error) {
     console.error('Error patching week state:', error);
@@ -345,6 +479,7 @@ app.post('/api/week-state/toggle', async (req, res) => {
     }
 
     const started = new Set(weekState.startedWeeks);
+    const wasStartedBefore = started.has(week);
     let updatedCurrentWeek = weekState.currentWeek;
 
     if (started.has(week)) {
@@ -367,6 +502,14 @@ app.post('/api/week-state/toggle', async (req, res) => {
     };
 
     await writeWeekState(updatedState);
+    // If the week was just started, ensure pods are created for it
+    try {
+      if (!wasStartedBefore && updatedState.startedWeeks.includes(week)) {
+        await ensurePodsForWeek(week);
+      }
+    } catch (err) {
+      console.error('Failed to ensure pods after toggle:', err);
+    }
     res.json(updatedState);
   } catch (error) {
     console.error('Error toggling week state:', error);
@@ -435,6 +578,22 @@ app.post('/api/signups', async (req, res) => {
     signups.push(newPlayer.toJSON());
     await writeSignups(signups);
 
+    // After creating a signup, reshuffle pods for the current week (if any) and notify SSE clients
+    try {
+      const weekState = await readWeekState();
+      if (weekState.currentWeek !== null) {
+        const newPod = await createPodsForWeek(weekState.currentWeek);
+        const pods = await readPods();
+        const filtered = pods.filter((p) => p.week !== weekState.currentWeek);
+        filtered.push(newPod);
+        await writePods(filtered);
+        sendSseEvent('pods-reshuffled', { week: weekState.currentWeek, pod: newPod });
+      }
+      sendSseEvent('signups-updated', { action: 'create', player: newPlayer.toJSON() });
+    } catch (err) {
+      console.error('Error reshuffling pods after signup create:', err);
+    }
+
     res.status(201).json(newPlayer.toJSON());
   } catch (error) {
     console.error('Error creating signup:', error);
@@ -455,6 +614,22 @@ app.delete('/api/signups/:id', async (req, res) => {
     }
 
     await writeSignups(filteredSignups);
+    // After deleting a signup, reshuffle pods for the current week (if any) and notify SSE clients
+    try {
+      const weekState = await readWeekState();
+      if (weekState.currentWeek !== null) {
+        const newPod = await createPodsForWeek(weekState.currentWeek);
+        const pods = await readPods();
+        const filtered = pods.filter((p) => p.week !== weekState.currentWeek);
+        filtered.push(newPod);
+        await writePods(filtered);
+        sendSseEvent('pods-reshuffled', { week: weekState.currentWeek, pod: newPod });
+      }
+      sendSseEvent('signups-updated', { action: 'delete', id });
+    } catch (err) {
+      console.error('Error reshuffling pods after signup delete:', err);
+    }
+
     res.json({ message: 'Signup deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete signup' });
@@ -465,6 +640,22 @@ app.delete('/api/signups/:id', async (req, res) => {
 app.delete('/api/signups', async (req, res) => {
   try {
     await writeSignups([]);
+    // After clearing signups, reshuffle pods for the current week (will result in empty groups) and notify SSE clients
+    try {
+      const weekState = await readWeekState();
+      if (weekState.currentWeek !== null) {
+        const newPod = await createPodsForWeek(weekState.currentWeek);
+        const pods = await readPods();
+        const filtered = pods.filter((p) => p.week !== weekState.currentWeek);
+        filtered.push(newPod);
+        await writePods(filtered);
+        sendSseEvent('pods-reshuffled', { week: weekState.currentWeek, pod: newPod });
+      }
+      sendSseEvent('signups-updated', { action: 'reset' });
+    } catch (err) {
+      console.error('Error reshuffling pods after clearing signups:', err);
+    }
+
     res.json({ message: 'All signups deleted successfully' });
   } catch (error) {
     console.error('Error deleting all signups:', error);
@@ -537,6 +728,82 @@ app.get('/api/groups/random', async (req, res) => {
   } catch (error) {
     console.error('Error creating random groups:', error);
     res.status(500).json({ error: 'Failed to create random groups' });
+  }
+});
+
+// Get pods (optionally for a specific week)
+app.get('/api/pods', async (req, res) => {
+  try {
+    const weekParam = req.query.week;
+    const pods = await readPods();
+
+    if (weekParam !== undefined) {
+      const week = parseInt(String(weekParam), 10);
+      if (!Number.isInteger(week) || week < 1) {
+        return res.status(400).json({ error: 'Invalid week parameter' });
+      }
+
+      const pod = pods.find((p) => p.week === week);
+      if (!pod) {
+        return res.json({ week, groups: [] });
+      }
+
+      return res.json(pod);
+    }
+
+    // Return all pods
+    res.json(pods);
+  } catch (error) {
+    console.error('Error retrieving pods:', error);
+    res.status(500).json({ error: 'Failed to retrieve pods' });
+  }
+});
+
+// Create pods for a specific week (idempotent)
+app.post('/api/pods', async (req, res) => {
+  try {
+    const { week } = req.body || {};
+
+    if (!Number.isInteger(week) || week < 1) {
+      return res.status(400).json({ error: 'Week must be a positive integer' });
+    }
+
+    const pod = await ensurePodsForWeek(week);
+    res.status(201).json(pod);
+  } catch (error) {
+    console.error('Error creating pods:', error);
+    res.status(500).json({ error: 'Failed to create pods' });
+  }
+});
+
+// Reshuffle (recreate) pods for a specific week and persist the result
+app.post('/api/pods/reshuffle', async (req, res) => {
+  try {
+    const { week } = req.body || {};
+
+    let targetWeek = week;
+    if (targetWeek === undefined || targetWeek === null) {
+      // fallback to current week from week-state
+      const ws = await readWeekState();
+      targetWeek = ws.currentWeek;
+    }
+
+    if (!Number.isInteger(targetWeek) || targetWeek < 1) {
+      return res.status(400).json({ error: 'Week must be a positive integer or there must be a current week' });
+    }
+
+    const newPod = await createPodsForWeek(targetWeek);
+
+    // Persist by replacing any existing pod for this week
+    const pods = await readPods();
+    const filtered = pods.filter((p) => p.week !== targetWeek);
+    filtered.push(newPod);
+    await writePods(filtered);
+
+    res.status(201).json(newPod);
+  } catch (error) {
+    console.error('Error reshuffling pods:', error);
+    res.status(500).json({ error: 'Failed to reshuffle pods' });
   }
 });
 

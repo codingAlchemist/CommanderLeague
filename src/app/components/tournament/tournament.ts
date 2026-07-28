@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
@@ -33,7 +33,8 @@ interface WeekState {
   templateUrl: './tournament.html',
   styleUrl: './tournament.scss',
 })
-export class Tournament implements OnInit {
+export class Tournament implements OnInit, OnDestroy {
+  private eventSource: EventSource | null = null;
   private http = inject(HttpClient);
   private cdr = inject(ChangeDetectorRef);
 
@@ -66,8 +67,54 @@ export class Tournament implements OnInit {
   };
 
   ngOnInit() {
-    this.loadRandomPlayers();
+    this.setupEventSource();
     this.loadWeekState();
+  }
+
+  ngOnDestroy(): void {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+
+  private setupEventSource(): void {
+    try {
+      this.eventSource = new EventSource('/api/events');
+
+      this.eventSource.addEventListener('pods-reshuffled', (ev: any) => {
+        try {
+          const data = JSON.parse(ev.data);
+          const week = data?.week;
+          console.log('Received pods-reshuffled for week', week);
+          if (week && this.weekState.currentWeek === week) {
+            this.loadPodsForWeek(week);
+          }
+        } catch (err) {
+          console.error('Failed to parse pods-reshuffled event', err);
+        }
+      });
+
+      this.eventSource.addEventListener('signups-updated', (ev: any) => {
+        try {
+          const payload = JSON.parse(ev.data);
+          console.log('Received signups-updated', payload);
+          if (this.showSignups) {
+            this.loadAllSignups();
+          }
+          // Refresh groups for current week (pods-reshuffled event will also arrive)
+          this.loadGroupsForCurrentWeek();
+        } catch (err) {
+          console.error('Failed to parse signups-updated event', err);
+        }
+      });
+
+      this.eventSource.onerror = (err) => {
+        console.warn('EventSource error', err);
+      };
+    } catch (err) {
+      console.error('Failed to create EventSource', err);
+    }
   }
 
   loadRandomPlayers() {
@@ -90,6 +137,50 @@ export class Tournament implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
         console.log('Error occurred, isLoading:', this.isLoading);
+      },
+    });
+  }
+
+  loadGroupsForCurrentWeek() {
+    if (this.weekState.currentWeek !== null) {
+      this.loadPodsForWeek(this.weekState.currentWeek);
+    } else {
+      this.loadRandomPlayers();
+    }
+  }
+
+  loadPodsForWeek(week: number) {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.http.get<any>(`/api/pods?week=${week}`).subscribe({
+      next: (pod) => {
+        if (!pod || !Array.isArray(pod.groups) || pod.groups.length === 0) {
+          // No pods persisted for this week yet — do not auto-reshuffle on page load.
+          // Leave groups empty and show the UI notice so admins can explicitly reshuffle.
+          this.groups = [];
+          this.players = [];
+          this.isLoading = false;
+          this.cdr.detectChanges();
+          return;
+        }
+
+        this.groups = pod.groups.map((g: any) => ({
+          groupNumber: g.groupNumber,
+          players: g.players,
+        }));
+
+        // Flatten players for total count
+        this.players = this.groups.flatMap((g) => g.players);
+
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to load pods for week:', error);
+        this.errorMessage = 'Failed to load tournament pods for selected week';
+        this.isLoading = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -138,7 +229,22 @@ export class Tournament implements OnInit {
     this.groupWinners.clear();
     this.winnersGroup = null;
     this.winnersPodWinnerId = null;
-    this.loadRandomPlayers();
+    // If a week is active, reshuffle pods for that week and reload; otherwise shuffle random players
+    if (this.weekState.currentWeek !== null) {
+      this.isLoading = true;
+      this.http.post<any>('/api/pods/reshuffle', { week: this.weekState.currentWeek }).subscribe({
+        next: (pod) => {
+          this.loadPodsForWeek(this.weekState.currentWeek!);
+        },
+        error: (error) => {
+          console.error('Failed to reshuffle pods:', error);
+          // fall back to random players on error
+          this.loadRandomPlayers();
+        },
+      });
+    } else {
+      this.loadRandomPlayers();
+    }
   }
 
   selectWinner(player: Player, groupNumber: number) {
@@ -306,6 +412,29 @@ export class Tournament implements OnInit {
     });
   }
 
+  dropPlayer(id: string) {
+    const shouldDrop = confirm('Drop this player?');
+    if (!shouldDrop) {
+      return;
+    }
+
+    this.isLoadingSignups = true;
+
+    this.http.delete(`/api/signups/${id}`).subscribe({
+      next: () => {
+        this.allSignups = this.allSignups.filter((p) => p.id !== id);
+        this.isLoadingSignups = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to drop player:', error);
+        this.errorMessage = 'Failed to drop player';
+        this.isLoadingSignups = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   loadWeekState() {
     this.isLoadingWeekState = true;
 
@@ -314,6 +443,8 @@ export class Tournament implements OnInit {
         this.weekState = state;
         this.refreshWeeks(state.totalWeeks);
         this.isLoadingWeekState = false;
+        // Load pods for current week (if any) after obtaining week state
+        this.loadGroupsForCurrentWeek();
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -391,6 +522,8 @@ export class Tournament implements OnInit {
         next: (state) => {
           this.weekState = state;
           this.isStartingWeek = false;
+          // Refresh groups/pods for the newly selected week
+          this.loadGroupsForCurrentWeek();
           this.cdr.detectChanges();
         },
         error: (error) => {
