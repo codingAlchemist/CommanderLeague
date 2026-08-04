@@ -305,6 +305,12 @@
   &.active-week {
     background: #16a34a;
   }
+
+  &.selected-week {
+    background: #f59e0b;
+    color: #111827;
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
+  }
 }
 
 .week-label {
@@ -388,6 +394,32 @@
     background: linear-gradient(135deg, #fff9e6 0%, #fffef0 100%);
     border-left: 4px solid #f39c12;
     box-shadow: 0 2px 12px rgba(243, 156, 18, 0.2);
+  }
+
+  &.player-absent {
+    background: #f8d7da;
+    border-left: 4px solid #dc3545;
+    color: #721c24;
+    opacity: 0.98;
+  }
+
+  &.player-absent:hover {
+    background: #f5c6cb;
+    transform: none;
+    box-shadow: 0 4px 16px rgba(220, 53, 69, 0.18);
+  }
+
+  &.player-absent .player-info h3 {
+    color: #721c24;
+  }
+
+  &.player-absent .player-details p {
+    color: #6f1f27;
+  }
+
+  &.player-absent .winner-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
@@ -609,6 +641,28 @@
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  &.player-absent {
+    background: #fde2e6;
+    border-left-color: #dc3545;
+    color: #842029;
+  }
+
+  &.player-absent .signup-rank {
+    background: linear-gradient(135deg, #dc3545 0%, #bb2d3b 100%);
+  }
+
+  &.player-absent .signup-info h3 {
+    color: #842029;
+  }
+
+  &.player-absent .signup-details p {
+    color: #6f1f27;
+  }
+
+  &.player-absent .signup-actions button {
+    opacity: 0.85;
   }
 }
 

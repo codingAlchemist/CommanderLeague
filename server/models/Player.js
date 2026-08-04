@@ -1,5 +1,5 @@
 class Player {
-  constructor({ id, playerName, email, discordUsername, deckName, commander, createdAt, points }) {
+  constructor({ id, playerName, email, discordUsername, deckName, commander, createdAt, points, absent }) {
     this.id = id || Date.now().toString();
     this.playerName = playerName;
     this.email = email;
@@ -7,6 +7,7 @@ class Player {
     this.deckName = deckName;
     this.commander = commander;
     this.points = points || 0;
+    this.absent = absent === true;
     this.createdAt = createdAt || new Date().toISOString();
   }
 
@@ -34,6 +35,10 @@ class Player {
 
     if (!data.commander || typeof data.commander !== 'string' || data.commander.trim() === '') {
       errors.push('Commander is required and must be a non-empty string');
+    }
+
+    if (data.absent !== undefined && typeof data.absent !== 'boolean') {
+      errors.push('Absent must be a boolean');
     }
 
     return {
@@ -67,6 +72,7 @@ class Player {
       deckName: this.deckName,
       commander: this.commander,
       points: this.points,
+      absent: this.absent,
       createdAt: this.createdAt
     };
   }

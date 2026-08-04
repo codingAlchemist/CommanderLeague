@@ -72,7 +72,14 @@ async function ensureDataDirectory() {
 async function readSignups() {
   try {
     const data = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.map((signup) => ({
+      ...signup,
+      absent: signup.absent === true
+    }));
   } catch (error) {
     console.error('Error reading signups:', error);
     return [];
@@ -162,7 +169,8 @@ async function writePods(pods) {
 // Create pods (groupings) for a specific week from current signups
 async function createPodsForWeek(week) {
   const signups = await readSignups();
-  const totalPlayers = signups.length;
+  const activeSignups = signups.filter((signup) => !signup.absent);
+  const totalPlayers = activeSignups.length;
 
   const minGroupSize = 3;
   const maxGroupSize = 4;
@@ -181,7 +189,7 @@ async function createPodsForWeek(week) {
   const baseSize = Math.floor(totalPlayers / groupCount);
   const groupsWithExtraPlayer = totalPlayers % groupCount;
 
-  const shuffled = shuffleArray([...signups]);
+  const shuffled = shuffleArray([...activeSignups]);
 
   const groups = [];
   let startIndex = 0;
@@ -191,7 +199,8 @@ async function createPodsForWeek(week) {
 
     groups.push({
       groupNumber: groupIndex + 1,
-      players: groupPlayers
+      players: groupPlayers,
+      winnerId: null
     });
 
     startIndex += currentGroupSize;
@@ -229,6 +238,15 @@ async function readAdminCredentials() {
     username: parsed.username,
     password: parsed.password
   };
+}
+
+async function writeAdminCredentials(credentials) {
+  try {
+    await fs.writeFile(ADMIN_CREDENTIALS_FILE, JSON.stringify(credentials, null, 2));
+  } catch (error) {
+    console.error('Error writing admin credentials:', error);
+    throw error;
+  }
 }
 
 // Routes
@@ -316,6 +334,49 @@ app.post('/api/admin/login', async (req, res) => {
   });
 
   return res.json({ authenticated: true, isAdmin: true });
+});
+
+// Admin password change
+app.patch('/api/admin/password', async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  const requestIp = req.ip || req.socket?.remoteAddress || 'unknown';
+
+  if (typeof currentPassword !== 'string' || typeof newPassword !== 'string') {
+    return res.status(400).json({ error: 'Current password and new password are required' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters long' });
+  }
+
+  let adminCredentials;
+  try {
+    adminCredentials = await readAdminCredentials();
+  } catch (error) {
+    console.error('Error reading admin credentials:', error);
+    return res.status(500).json({ error: 'Failed to update admin password' });
+  }
+
+  if (currentPassword !== adminCredentials.password) {
+    console.warn('Admin password change rejected: incorrect current password', {
+      ip: requestIp
+    });
+    return res.status(401).json({ error: 'Current password is incorrect' });
+  }
+
+  try {
+    await writeAdminCredentials({ username: adminCredentials.username, password: newPassword });
+  } catch (error) {
+    console.error('Failed to save new admin password:', error);
+    return res.status(500).json({ error: 'Failed to update admin password' });
+  }
+
+  console.info('Admin password changed successfully', {
+    ip: requestIp,
+    timestamp: new Date().toISOString()
+  });
+
+  return res.json({ success: true });
 });
 
 // Get precons
@@ -636,6 +697,65 @@ app.delete('/api/signups/:id', async (req, res) => {
   }
 });
 
+// Update signup properties such as points or absent status
+app.patch('/api/signups/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { points, absent } = req.body;
+
+    if (points !== undefined && typeof points !== 'number') {
+      return res.status(400).json({ error: 'Points must be a number' });
+    }
+
+    if (absent !== undefined && typeof absent !== 'boolean') {
+      return res.status(400).json({ error: 'Absent must be a boolean' });
+    }
+
+    if (points === undefined && absent === undefined) {
+      return res.status(400).json({ error: 'Nothing to update' });
+    }
+
+    const signups = await readSignups();
+    const playerIndex = signups.findIndex(signup => signup.id === id);
+
+    if (playerIndex === -1) {
+      return res.status(404).json({ error: 'Signup not found' });
+    }
+
+    if (points !== undefined) {
+      signups[playerIndex].points = points;
+    }
+    if (absent !== undefined) {
+      signups[playerIndex].absent = absent;
+    }
+
+    await writeSignups(signups);
+    const updatedPlayer = signups[playerIndex];
+
+    try {
+      if (absent !== undefined) {
+        const weekState = await readWeekState();
+        if (weekState.currentWeek !== null) {
+          const newPod = await createPodsForWeek(weekState.currentWeek);
+          const pods = await readPods();
+          const filtered = pods.filter((p) => p.week !== weekState.currentWeek);
+          filtered.push(newPod);
+          await writePods(filtered);
+          sendSseEvent('pods-reshuffled', { week: weekState.currentWeek, pod: newPod });
+        }
+      }
+      sendSseEvent('signups-updated', { action: 'update', player: updatedPlayer });
+    } catch (err) {
+      console.error('Error reshuffling pods after signup update:', err);
+    }
+
+    res.json(updatedPlayer);
+  } catch (error) {
+    console.error('Error updating signup:', error);
+    res.status(500).json({ error: 'Failed to update signup' });
+  }
+});
+
 // Delete all signups
 app.delete('/api/signups', async (req, res) => {
   try {
@@ -693,7 +813,7 @@ app.patch('/api/signups/:id/points', async (req, res) => {
 // Group players into groups of 4 (in signup order)
 app.get('/api/groups', async (req, res) => {
   try {
-    const signups = await readSignups();
+    const signups = (await readSignups()).filter((signup) => !signup.absent);
 
     // Group players into groups of 4
     const groups = [];
@@ -719,7 +839,7 @@ app.get('/api/groups', async (req, res) => {
 // Group players into groups of 4 randomly
 app.get('/api/groups/random', async (req, res) => {
   try {
-    const signups = await readSignups();
+    const signups = (await readSignups()).filter((signup) => !signup.absent);
 
     // Shuffle players randomly
     const shuffledPlayers = shuffleArray([...signups]);
@@ -804,6 +924,50 @@ app.post('/api/pods/reshuffle', async (req, res) => {
   } catch (error) {
     console.error('Error reshuffling pods:', error);
     res.status(500).json({ error: 'Failed to reshuffle pods' });
+  }
+});
+
+app.patch('/api/pods/:week/groups/:groupNumber/winner', async (req, res) => {
+  try {
+    const week = parseInt(req.params.week, 10);
+    const groupNumber = parseInt(req.params.groupNumber, 10);
+    const { winnerId } = req.body;
+
+    if (!Number.isInteger(week) || week < 1) {
+      return res.status(400).json({ error: 'Week must be a positive integer' });
+    }
+    if (!Number.isInteger(groupNumber) || groupNumber < 1) {
+      return res.status(400).json({ error: 'Group number must be a positive integer' });
+    }
+    if (winnerId !== null && winnerId !== undefined && typeof winnerId !== 'string') {
+      return res.status(400).json({ error: 'winnerId must be a string or null' });
+    }
+
+    const pods = await readPods();
+    const pod = pods.find((p) => p.week === week);
+    if (!pod) {
+      return res.status(404).json({ error: 'Pod for week not found' });
+    }
+
+    const group = pod.groups.find((g) => g.groupNumber === groupNumber);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    if (winnerId !== null && winnerId !== undefined) {
+      const playerExists = group.players.some((player) => player.id === winnerId);
+      if (!playerExists) {
+        return res.status(400).json({ error: 'winnerId must belong to a player in the group' });
+      }
+    }
+
+    group.winnerId = winnerId;
+    await writePods(pods);
+
+    res.json(group);
+  } catch (error) {
+    console.error('Error updating pod winner:', error);
+    res.status(500).json({ error: 'Failed to update pod winner' });
   }
 });
 

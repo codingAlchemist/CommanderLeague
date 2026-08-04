@@ -8,6 +8,13 @@ export const routes: Routes = [
     loadComponent: () => import('./components/admin-login/admin-login').then((m) => m.AdminLogin),
   },
   {
+    path: 'admin-change-password',
+    loadComponent: () =>
+      import('./components/admin-password-change/admin-password-change').then(
+        (m) => m.AdminPasswordChange,
+      ),
+  },
+  {
     path: 'sign-up',
     loadComponent: () => import('./components/sign-up/sign-up').then((m) => m.SignUp),
   },

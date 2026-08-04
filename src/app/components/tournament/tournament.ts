@@ -12,12 +12,14 @@ interface Player {
   deckName: string;
   commander: string;
   points: number;
+  absent: boolean;
   createdAt: string;
 }
 
 interface PlayerGroup {
   groupNumber: number;
   players: Player[];
+  winnerId?: string | null;
 }
 
 interface WeekState {
@@ -44,6 +46,7 @@ export class Tournament implements OnInit, OnDestroy {
   winnersGroup: PlayerGroup | null = null;
   winnersPodWinnerId: string | null = null;
   isWinnersBracketEnabled = false;
+  selectedWeek: number | null = null;
   allSignups: Player[] = [];
   showSignups = false;
   showRankings = false;
@@ -103,7 +106,7 @@ export class Tournament implements OnInit, OnDestroy {
             this.loadAllSignups();
           }
           // Refresh groups for current week (pods-reshuffled event will also arrive)
-          this.loadGroupsForCurrentWeek();
+          this.loadGroupsForSelectedWeek();
         } catch (err) {
           console.error('Failed to parse signups-updated event', err);
         }
@@ -141,37 +144,45 @@ export class Tournament implements OnInit, OnDestroy {
     });
   }
 
-  loadGroupsForCurrentWeek() {
-    if (this.weekState.currentWeek !== null) {
+  loadGroupsForSelectedWeek() {
+    if (this.selectedWeek !== null) {
+      this.loadPodsForWeek(this.selectedWeek);
+    } else if (this.weekState.currentWeek !== null) {
       this.loadPodsForWeek(this.weekState.currentWeek);
     } else {
-      this.loadRandomPlayers();
+      this.groups = [];
+      this.players = [];
     }
   }
 
   loadPodsForWeek(week: number) {
     this.isLoading = true;
     this.errorMessage = '';
+    this.selectedWeek = week;
 
     this.http.get<any>(`/api/pods?week=${week}`).subscribe({
       next: (pod) => {
         if (!pod || !Array.isArray(pod.groups) || pod.groups.length === 0) {
-          // No pods persisted for this week yet — do not auto-reshuffle on page load.
-          // Leave groups empty and show the UI notice so admins can explicitly reshuffle.
           this.groups = [];
           this.players = [];
+          this.groupWinners.clear();
+          this.winnersGroup = null;
+          this.winnersPodWinnerId = null;
           this.isLoading = false;
           this.cdr.detectChanges();
           return;
         }
 
+        this.groupWinners.clear();
+        this.winnersPodWinnerId = null;
         this.groups = pod.groups.map((g: any) => ({
           groupNumber: g.groupNumber,
           players: g.players,
+          winnerId: g.winnerId ?? null,
         }));
 
-        // Flatten players for total count
         this.players = this.groups.flatMap((g) => g.players);
+        this.syncGroupWinnersFromLoadedGroups();
 
         this.isLoading = false;
         this.cdr.detectChanges();
@@ -248,6 +259,11 @@ export class Tournament implements OnInit, OnDestroy {
   }
 
   selectWinner(player: Player, groupNumber: number) {
+    if (player.absent) {
+      this.errorMessage = 'Absent players cannot be selected as winners.';
+      return;
+    }
+
     const originalWinner = this.groupWinners.get(groupNumber) ?? null;
     const isCurrentWinner = originalWinner?.id === player.id;
     const groupHasWinner = !!originalWinner;
@@ -301,7 +317,17 @@ export class Tournament implements OnInit, OnDestroy {
     ).subscribe({
       next: () => {
         console.log('Updated winner points for group', groupNumber);
-        this.cdr.detectChanges();
+        const winnerId = isCurrentWinner ? null : player.id;
+        this.http
+          .patch(`/api/pods/${this.selectedWeek}/groups/${groupNumber}/winner`, { winnerId })
+          .subscribe({
+            next: () => {
+              this.cdr.detectChanges();
+            },
+            error: (error) => {
+              console.error('Failed to persist pod winner:', error);
+            },
+          });
       },
       error: (error) => {
         console.error('Failed to update points:', error);
@@ -356,16 +382,63 @@ export class Tournament implements OnInit, OnDestroy {
     }
   }
 
+  private syncGroupWinnersFromLoadedGroups(): void {
+    this.groupWinners.clear();
+    for (const group of this.groups) {
+      if (group.winnerId) {
+        const player = group.players.find((p) => p.id === group.winnerId);
+        if (player) {
+          this.groupWinners.set(group.groupNumber, player);
+        }
+      }
+    }
+
+    this.updateWinnersGroup();
+  }
+
   isWinner(player: Player, groupNumber: number): boolean {
     return this.groupWinners.get(groupNumber)?.id === player.id;
   }
 
   selectWinnersPodWinner(player: Player) {
+    if (!this.isActiveWeekSelected()) {
+      this.errorMessage = 'Cannot edit winners for a past week.';
+      return;
+    }
+
+    if (player.absent) {
+      this.errorMessage = 'Absent players cannot be selected as winners.';
+      return;
+    }
+
     this.winnersPodWinnerId = this.winnersPodWinnerId === player.id ? null : player.id;
   }
 
   isWinnersPodWinner(player: Player): boolean {
     return this.winnersPodWinnerId === player.id;
+  }
+
+  toggleAbsent(player: Player) {
+    const newAbsentStatus = !player.absent;
+    this.isLoadingSignups = true;
+    this.errorMessage = '';
+
+    this.http.patch<Player>(`/api/signups/${player.id}`, { absent: newAbsentStatus }).subscribe({
+      next: (updatedPlayer) => {
+        this.allSignups = this.allSignups.map((p) => (p.id === updatedPlayer.id ? updatedPlayer : p));
+        if (this.weekState.currentWeek !== null) {
+          this.loadGroupsForSelectedWeek();
+        }
+        this.isLoadingSignups = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Failed to update absent status:', error);
+        this.errorMessage = 'Failed to update absent status';
+        this.isLoadingSignups = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   toggleWinnersBracket(): void {
@@ -442,9 +515,12 @@ export class Tournament implements OnInit, OnDestroy {
       next: (state) => {
         this.weekState = state;
         this.refreshWeeks(state.totalWeeks);
+        if (this.selectedWeek === null) {
+          this.selectedWeek = state.currentWeek;
+        }
         this.isLoadingWeekState = false;
-        // Load pods for current week (if any) after obtaining week state
-        this.loadGroupsForCurrentWeek();
+        // Load pods for the selected or current week after obtaining week state
+        this.loadGroupsForSelectedWeek();
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -483,35 +559,71 @@ export class Tournament implements OnInit, OnDestroy {
     });
   }
 
-  startWeek(week: number) {
+  handleWeekAction(week: number) {
     if (this.isStartingWeek) {
       return;
     }
 
     const alreadyStarted = this.isWeekStarted(week);
-    const action = alreadyStarted ? 'End' : 'Start';
-    const shouldProceed = confirm(`${action} Week ${week}?`);
+    const isCurrent = this.weekState.currentWeek === week;
+    const isViewingPastWeek = this.selectedWeek !== null && this.weekState.currentWeek !== null && this.selectedWeek !== this.weekState.currentWeek;
+
+    if (isCurrent && isViewingPastWeek) {
+      this.selectedWeek = week;
+      this.loadGroupsForSelectedWeek();
+      return;
+    }
+
+    if (isCurrent) {
+      const shouldProceed = confirm(`End Week ${week}?`);
+      if (!shouldProceed) {
+        return;
+      }
+
+      this.isStartingWeek = true;
+      const newStartedWeeks = [...this.weekState.startedWeeks];
+      const newCurrentWeek = null;
+
+      this.http
+        .patch<WeekState>('/api/week-state', {
+          currentWeek: newCurrentWeek,
+          startedWeeks: newStartedWeeks,
+        })
+        .subscribe({
+          next: (state) => {
+            this.weekState = state;
+            this.selectedWeek = week;
+            this.isStartingWeek = false;
+            this.loadGroupsForSelectedWeek();
+            this.cdr.detectChanges();
+          },
+          error: (error) => {
+            console.error('Failed to end week:', error);
+            this.errorMessage = 'Failed to end week';
+            this.isStartingWeek = false;
+            this.cdr.detectChanges();
+          },
+        });
+
+      return;
+    }
+
+    if (alreadyStarted) {
+      this.selectedWeek = week;
+      this.loadGroupsForSelectedWeek();
+      return;
+    }
+
+    const shouldProceed = confirm(`Start Week ${week}?`);
     if (!shouldProceed) {
       return;
     }
 
     this.isStartingWeek = true;
-
-    // Compute new week state to send to server
-    let newStartedWeeks: number[];
-    let newCurrentWeek: number | null;
-
-    if (alreadyStarted) {
-      // Ending the week: remove it from startedWeeks and clear currentWeek if it was this week
-      newStartedWeeks = this.weekState.startedWeeks.filter((w) => w !== week);
-      newCurrentWeek = this.weekState.currentWeek === week ? null : this.weekState.currentWeek;
-    } else {
-      // Starting the week: add to startedWeeks and set as currentWeek
-      newStartedWeeks = Array.from(new Set([...this.weekState.startedWeeks, week])).sort(
-        (a, b) => a - b,
-      );
-      newCurrentWeek = week;
-    }
+    const newStartedWeeks = Array.from(new Set([...this.weekState.startedWeeks, week])).sort(
+      (a, b) => a - b,
+    );
+    const newCurrentWeek = week;
 
     this.http
       .patch<WeekState>('/api/week-state', {
@@ -521,14 +633,14 @@ export class Tournament implements OnInit, OnDestroy {
       .subscribe({
         next: (state) => {
           this.weekState = state;
+          this.selectedWeek = week;
           this.isStartingWeek = false;
-          // Refresh groups/pods for the newly selected week
-          this.loadGroupsForCurrentWeek();
+          this.loadGroupsForSelectedWeek();
           this.cdr.detectChanges();
         },
         error: (error) => {
-          console.error('Failed to update week state:', error);
-          this.errorMessage = `Failed to ${alreadyStarted ? 'end' : 'start'} week`;
+          console.error('Failed to start week:', error);
+          this.errorMessage = 'Failed to start week';
           this.isStartingWeek = false;
           this.cdr.detectChanges();
         },
@@ -568,5 +680,13 @@ export class Tournament implements OnInit, OnDestroy {
 
   isWeekStarted(week: number): boolean {
     return this.weekState.startedWeeks.includes(week);
+  }
+
+  isWeekEnded(week: number): boolean {
+    return this.isWeekStarted(week) && this.weekState.currentWeek !== week;
+  }
+
+  isActiveWeekSelected(): boolean {
+    return this.selectedWeek !== null && this.weekState.currentWeek === this.selectedWeek;
   }
 }

@@ -37,10 +37,13 @@
     </div>
 
     <div class="signups-list" *ngIf="!isLoadingSignups">
-      <div class="signup-card" *ngFor="let player of allSignups; let i = index">
+      <div class="signup-card" *ngFor="let player of allSignups; let i = index" [class.player-absent]="player.absent">
         <div class="signup-rank">{{ i + 1 }}</div>
         <div class="signup-info">
-          <h3>{{ player.playerName }}</h3>
+          <h3>
+            {{ player.playerName }}
+            <span class="absent-badge" *ngIf="player.absent">Absent</span>
+          </h3>
           <div class="signup-details">
             <p><strong>Deck:</strong> {{ player.deckName }}</p>
             <p><strong>Commander:</strong> {{ player.commander }}</p>
@@ -55,6 +58,10 @@
         <div class="signup-actions">
           <button class="drop-btn" (click)="dropPlayer(player.id)" [disabled]="isLoadingSignups">
             🗑️ Drop
+          </button>
+          <button class="absent-btn" [class.absent]="player.absent" (click)="toggleAbsent(player)"
+            [disabled]="isLoadingSignups">
+            {{ player.absent ? 'Mark Present' : 'Mark Absent' }}
           </button>
         </div>
       </div>
@@ -103,12 +110,18 @@
       </div>
 
       <div class="week-buttons">
-        <button class="week-btn" *ngFor="let week of weeks" [class.active-week]="weekState.currentWeek === week"
-          [class.started-week]="isWeekStarted(week)" [disabled]="isLoadingWeekState || isStartingWeek"
-          (click)="startWeek(week)">
-          <span class="week-label">Week {{ week }}</span>
+        <button class="week-btn" *ngFor="let week of weeks"
+          [class.active-week]="weekState.currentWeek === week"
+          [class.selected-week]="selectedWeek === week && weekState.currentWeek !== week"
+          [class.ended-week]="isWeekEnded(week)"
+          [disabled]="isLoadingWeekState || isStartingWeek"
+          (click)="handleWeekAction(week)">
+          <span class="week-label">
+            {{ weekState.currentWeek === week ? 'View Current Week' : 'View Week ' + week }}
+          </span>
           <span class="week-status" *ngIf="weekState.currentWeek === week">Current</span>
-          <span class="week-status" *ngIf="weekState.currentWeek !== week && isWeekStarted(week)">Started</span>
+          <span class="week-status" *ngIf="selectedWeek === week && weekState.currentWeek !== week">Viewing</span>
+          <span class="week-status" *ngIf="isWeekEnded(week) && selectedWeek !== week">Ended</span>
         </button>
       </div>
     </section>
@@ -156,8 +169,13 @@
             <div class="player-actions">
               <button class="winner-btn" [class.selected]="isWinner(player, group.groupNumber)"
                 (click)="selectWinner(player, group.groupNumber)"
-                [title]="isWinner(player, group.groupNumber) ? 'Remove winner status' : 'Select as winner'">
+                [title]="isWinner(player, group.groupNumber) ? 'Remove winner status' : 'Select as winner'"
+                [disabled]="player.absent">
                 {{ isWinner(player, group.groupNumber) ? '✓ Winner' : '👑 Winner' }}
+              </button>
+              <button class="absent-btn" [class.absent]="player.absent"
+                (click)="toggleAbsent(player)">
+                {{ player.absent ? 'Mark Present' : 'Mark Absent' }}
               </button>
               <div class="player-points">
                 <span class="points-label">Points</span>
