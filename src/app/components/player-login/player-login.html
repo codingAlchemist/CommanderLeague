@@ -1,13 +1,16 @@
 <section class="player-login-shell">
   <div class="hero-copy">
     <h1>Player Login</h1>
-    <p>Sign in with the email or Discord name you used when you joined the league.</p>
+    <p>Sign in with the email or Discord name and password you used when you joined the league.</p>
   </div>
 
   <form class="login-card" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
     <label for="identifier">Email or Discord username</label>
     <input id="identifier" type="text" formControlName="identifier"
       placeholder="your.email@example.com or Username#1234" />
+
+    <label for="password">Password</label>
+    <input id="password" type="password" formControlName="password" placeholder="Enter your password" />
 
     <button type="submit" [disabled]="loginForm.invalid || isSubmitting()">
       {{ isSubmitting() ? 'Checking...' : 'Log In' }}
@@ -19,7 +22,31 @@
     </p>
     }
 
-    @if (currentPlayer()) {
+    @if (currentPlayer() && needsPasswordSetup()) {
+    <div class="password-setup">
+      <h2>Create Your Password</h2>
+      <p>Looks like you haven’t set a password yet. Choose one to finish signing in.</p>
+
+      <form [formGroup]="passwordSetupForm" (ngSubmit)="setPassword()">
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" formControlName="newPassword" placeholder="At least 6 characters" />
+
+        <label for="confirmPassword">Confirm password</label>
+        <input id="confirmPassword" type="password" formControlName="confirmPassword"
+          placeholder="Confirm your password" />
+
+        @if (passwordSetupForm.hasError('passwordMismatch') && passwordSetupForm.touched) {
+        <p class="field-error">Passwords do not match.</p>
+        }
+
+        <button type="submit" [disabled]="passwordSetupForm.invalid || isSubmitting()">
+          Save Password
+        </button>
+      </form>
+    </div>
+    }
+
+    @if (currentPlayer() && !needsPasswordSetup()) {
     <div class="player-summary">
       <h2>{{ currentPlayer()?.playerName }}</h2>
       <p><strong>Deck:</strong> {{ currentPlayer()?.deckName }}</p>

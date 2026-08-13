@@ -24,6 +24,10 @@ export const routes: Routes = [
       import('./components/player-login/player-login').then((m) => m.PlayerLogin),
   },
   {
+    path: 'player/:id',
+    loadComponent: () => import('./components/player-page/player-page').then((m) => m.PlayerPage),
+  },
+  {
     path: 'tournament',
     canActivate: [adminAuthGuard],
     loadComponent: () => import('./components/tournament/tournament').then((m) => m.Tournament),

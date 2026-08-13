@@ -250,6 +250,104 @@ async function writeAdminCredentials(credentials) {
   }
 }
 
+function buildDeckListForPlayer(player) {
+  const deckName = typeof player?.deckName === 'string' ? player.deckName.trim() : '';
+  const commander = typeof player?.commander === 'string' ? player.commander.trim() : '';
+
+  const deckCatalog = {
+    'azorius control': [
+      'Arcane Signet', 'Talisman of Curiosity', 'Command Tower', 'Flooded Strand', 'Hallowed Fountain',
+      'Temple Garden', 'Seachrome Coast', 'Farseek', 'Cultivate', 'Sakura-Tribe Elder', 'Sol Ring',
+      'Boseiju, Who Endures', 'Brainstorm', 'Mystic Remora', 'Swords to Plowshares', 'Heroic Intervention',
+      'Supreme Verdict', 'The One Ring', 'Brago, King Eternal', 'Hallowed Moonlight'
+    ],
+    'golgari midrange': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Overgrown Tomb', 'Forest', 'Swamp', 'Farseek', 'Cultivate',
+      'Deadly Dispute', 'Nature's Lore', 'Sakura - Tribe Elder', 'Boseiju, Who Endures', 'Villainous Wealth',
+      'Meren of Clan Nel Toth', 'Ravenous Squirrel', 'Toxic Deluge', 'The Great Henge', 'Muldrotha, the Gravetide', 'Heroic Intervention'
+    ],
+    'mono-red burn': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Mountain', 'Rift Bolt', 'Lightning Bolt', 'Lava Spike',
+      'Goblin Guide', 'Reckless Bushwhacker', 'Kiki-Jiki, Mirror Breaker', 'Searing Blaze', 'Monastery Swiftspear',
+      'Mishra's Bauble', 'Fiery Islet', 'Rift Elemental', 'Sundial of the Infinite', 'Manamorphose', 'Boros Charm'
+    ],
+    'simic tempo': [
+      'The One Ring', 'Arcane Signet', 'Cultivate', 'Nature's Lore', 'Farseek', 'Growth Spiral', 'Mana Leak',
+      'Mystic Remora', 'Frilled Mystic', 'Merfolk Trickster', 'Spell Pierce', 'Command Tower', 'Scourge of Fleets',
+      'Panharmonicon', 'Simic Signet', 'Mosswort Bridge', 'Edric, Spymaster of Trest', 'Ghostly Pilferer'
+    ],
+    'rakdos reanimator': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Bloodstained Mire', 'Badlands', 'Grim Tutor', 'Dark Ritual',
+      'Reanimate', 'Animate Dead', 'Unearth', 'Vraska's Contempt', 'Beseech the Queen', 'Chainer, Dementia Master',
+      'Necromancy', 'Dread Return', 'Myrkul, Lord of Bones', 'Thought Distortion', 'Griselbrand'
+    ],
+    'selesnya tokens': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Temple Garden', 'Forest', 'Plains', 'Cultivate', 'Farseek',
+      'Anointed Procession', 'Rally the Ancestors', 'Rhys the Redeemed', 'Sakura-Tribe Elder', 'Spectral Procession',
+      'Overwhelming Stampede', 'Unclaimed Territory', 'Canopy Vista', 'Beast Within', 'Heroic Intervention'
+    ],
+    'izzet spells': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Steam Vents', 'Izzet Boilerworks', 'Brainstorm', 'Ponder',
+      'Mizzix of the Izmagnus', 'Spell Pierce', 'Magma Opus', 'Lightning Bolt', 'Electrostatic Field', 'Mizzium Mortars',
+      'Shivan Reef', 'Chaos Warp', 'The One Ring', 'Frantic Search', 'Talisman of Creativity'
+    ],
+    'phyrexian combo': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Vraska's Contempt', 'All Is Dust', 'Noxious Revival', 'Glistener Elf',
+      'Phyrexian Altar', 'Pact of Negation', 'Defense Grid', 'Aether Snap', 'Unmask', 'Beseech the Queen',
+      'Vorinclex, Monstrous Raider', 'Toxic Deluge', 'Necropotence', 'Bala Ged Recovery', 'Barren Glory'
+    ],
+    'dimir milling': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Drowned Catacomb', 'Watery Grave', 'Overwhelming Intellect',
+      'Hedron Crab', 'Tishana's Tidebinder', 'Drown in Ichor', 'Unsubstantiated Claim', 'Phenax, God of Deception',
+      'Mind Grind', 'Necropotence', 'Murderous Rider', 'Dismal Backwater', 'Gaea's Blessing', 'Fractured Identity'
+    ],
+    'boros aggro': [
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Battlefield Forge', 'Wind-Scarred Crag', 'Lightning Helix', 'Path to Exile',
+      'Rending Volley', 'Aurelia, the Warleader', 'Goblin Guide', 'Boros Charm', 'Adanto Vanguard', 'Sundial of the Infinite',
+      'Heroic Reinforcements', 'Inspiring Vantage', 'Rally the Peasants', 'Mishra's Factory'
+    ]
+  };
+
+  const deckKey = deckName.toLowerCase();
+  const commanderKey = commander.toLowerCase();
+  const deckList = deckCatalog[deckKey] || deckCatalog[commanderKey] || [
+    commander || 'Commander',
+    'Sol Ring',
+    'Arcane Signet',
+    'Command Tower',
+    'Cultivate',
+    'Farseek',
+    'Nature's Lore',
+    'Heroic Intervention',
+    'The One Ring',
+    'Talisman of Curiosity',
+    'Mana Confluence',
+    'Mystic Remora',
+    'Boseiju, Who Endures',
+    'Finale of Devotion',
+    'Sakura-Tribe Elder',
+    'Swords to Plowshares'
+  ];
+
+  return deckList.slice(0, 18);
+}
+
+function sanitizePlayer(player) {
+  if (!player || typeof player !== 'object') {
+    return player;
+  }
+
+  const { password, ...safePlayer } = player;
+  return safePlayer;
+}
+
+function withDeckList(player) {
+  return {
+    ...sanitizePlayer(player),
+    deckList: buildDeckListForPlayer(player)
+  };
+}
+
 // Routes
 
 // Server-Sent Events clients
@@ -395,10 +493,14 @@ app.get('/api/precons', async (req, res) => {
 // Player login
 app.post('/api/player/login', async (req, res) => {
   try {
-    const { identifier } = req.body || {};
+    const { identifier, password } = req.body || {};
 
     if (typeof identifier !== 'string' || identifier.trim() === '') {
       return res.status(400).json({ error: 'Email or Discord username is required' });
+    }
+
+    if (typeof password !== 'string' || password.trim() === '') {
+      return res.status(400).json({ error: 'Password is required' });
     }
 
     const signups = await readSignups();
@@ -413,10 +515,73 @@ app.post('/api/player/login', async (req, res) => {
       return res.status(401).json({ error: 'Player not found' });
     }
 
-    return res.json(player);
+    const storedPassword = typeof player.password === 'string' ? player.password : '';
+
+    if (!storedPassword) {
+      return res.status(200).json({
+        ...withDeckList(player),
+        requiresPasswordSetup: true
+      });
+    }
+
+    if (password !== storedPassword) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    return res.json({
+      ...withDeckList(player),
+      requiresPasswordSetup: false
+    });
   } catch (error) {
     console.error('Error authenticating player:', error);
     return res.status(500).json({ error: 'Failed to authenticate player' });
+  }
+});
+
+app.patch('/api/player/:id/password', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body || {};
+
+    if (typeof password !== 'string' || password.trim().length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    const signups = await readSignups();
+    const playerIndex = signups.findIndex((signup) => signup.id === id);
+
+    if (playerIndex === -1) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    signups[playerIndex].password = password;
+    await writeSignups(signups);
+
+    return res.json({
+      success: true,
+      player: withDeckList(signups[playerIndex])
+    });
+  } catch (error) {
+    console.error('Error setting player password:', error);
+    return res.status(500).json({ error: 'Failed to save player password' });
+  }
+});
+
+// Get a single player by id
+app.get('/api/player/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const signups = await readSignups();
+    const player = signups.find((signup) => signup.id === id);
+
+    if (!player) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    return res.json(withDeckList(player));
+  } catch (error) {
+    console.error('Error retrieving player:', error);
+    return res.status(500).json({ error: 'Failed to retrieve player' });
   }
 });
 
