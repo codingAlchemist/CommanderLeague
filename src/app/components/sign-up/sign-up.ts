@@ -23,6 +23,12 @@ interface Signup {
   createdAt: string;
 }
 
+interface DeckOption {
+  name: string;
+  displayLabel: string;
+  setCode: string;
+}
+
 @Component({
   selector: 'app-sign-up',
   imports: [ReactiveFormsModule],
@@ -36,6 +42,7 @@ export class SignUp implements OnInit {
   isDeletingId: string | null = null;
   isClearingAll = false;
   signups: Signup[] = [];
+  availableDecks: DeckOption[] = [];
   showModal = false;
 
   signUpForm = new FormGroup(
@@ -52,7 +59,65 @@ export class SignUp implements OnInit {
   );
 
   ngOnInit() {
+    this.loadDecks();
     this.loadSignups();
+  }
+
+  loadDecks() {
+    this.http.get<DeckOption[] | { decks?: DeckOption[] } | unknown>('/api/decks').subscribe({
+      next: (response) => {
+        const deckEntries = Array.isArray(response)
+          ? response
+          : Array.isArray((response as { decks?: DeckOption[] })?.decks)
+            ? (response as { decks: DeckOption[] }).decks
+            : [];
+
+        const deckMap = new Map<string, DeckOption>();
+
+        deckEntries.forEach((deck) => {
+          const candidate =
+            typeof deck === 'string'
+              ? deck
+              : typeof (deck as { name?: string })?.name === 'string'
+                ? (deck as { name: string }).name
+                : typeof (deck as { deckName?: string })?.deckName === 'string'
+                  ? (deck as { deckName: string }).deckName
+                  : '';
+
+          const trimmedName = candidate.trim();
+          if (!trimmedName) {
+            return;
+          }
+
+          const rawSetCode =
+            typeof (deck as { set_code?: string })?.set_code === 'string'
+              ? (deck as { set_code: string }).set_code
+              : typeof (deck as { setCode?: string })?.setCode === 'string'
+                ? (deck as { setCode: string }).setCode
+                : 'UNK';
+
+          const setCode = rawSetCode.trim() || 'UNK';
+          const existing = deckMap.get(trimmedName);
+
+          if (!existing) {
+            deckMap.set(trimmedName, {
+              name: trimmedName,
+              setCode: setCode.toUpperCase(),
+              displayLabel: `${setCode.toUpperCase()} — ${trimmedName}`,
+            });
+          }
+        });
+
+        this.availableDecks = [...deckMap.values()].sort((a, b) => {
+          const setComparison = a.setCode.localeCompare(b.setCode);
+          return setComparison !== 0 ? setComparison : a.name.localeCompare(b.name);
+        });
+      },
+      error: (error) => {
+        console.error('Failed to load decks:', error);
+        this.availableDecks = [];
+      },
+    });
   }
 
   loadSignups() {

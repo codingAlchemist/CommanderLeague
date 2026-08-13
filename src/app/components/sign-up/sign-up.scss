@@ -93,21 +93,29 @@
       font-size: 0.95rem;
     }
 
-    input {
+    input,
+    select {
       padding: 0.75rem;
       font-size: 1rem;
       border: 2px solid #e0e0e0;
-      border-radius: 4px;
-      transition: border-color 0.3s ease;
+      border-radius: 8px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      background: #fff;
 
       &:focus {
         outline: none;
         border-color: #3498db;
+        box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.12);
       }
 
       &::placeholder {
         color: #999;
       }
+    }
+
+    datalist {
+      max-height: 200px;
+      overflow-y: auto;
     }
   }
 

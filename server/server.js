@@ -15,6 +15,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
+const DECKS_FILE = path.join(__dirname, 'data', 'decks.json');
 const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
 const DEFAULT_TOTAL_WEEKS = 8;
 const MIN_TOTAL_WEEKS = 1;
@@ -203,6 +204,21 @@ async function writePods(pods) {
     console.error('Error writing pods:', error);
     throw error;
   }
+}
+
+async function readDecks() {
+  try {
+    const data = await fs.readFile(DECKS_FILE, 'utf8');
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Error reading decks:', error);
+    return [];
+  }
+}
+
+async function getDecks() {
+  return readDecks();
 }
 
 // Create pods (groupings) for a specific week from current signups
@@ -444,6 +460,16 @@ registerPodRoutes(app, {
   readWeekState,
   ensurePodsForWeek,
   shuffleArray,
+});
+
+app.get('/api/decks', async (req, res) => {
+  try {
+    const decks = await getDecks();
+    res.json(decks);
+  } catch (error) {
+    console.error('Error fetching decks:', error);
+    res.status(500).json({ error: 'Failed to fetch decks' });
+  }
 });
 
 // Health check

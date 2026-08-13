@@ -44,7 +44,13 @@
 
     <div class="form-group">
       <label for="deckName">Pre-Con Deck Name *</label>
-      <input type="text" id="deckName" formControlName="deckName" placeholder="e.g., Elven Empire" />
+      <input id="deckName" list="precon-deck-options" formControlName="deckName"
+        placeholder="Type or select a pre-con deck" autocomplete="off" />
+      <datalist id="precon-deck-options">
+        @for (deck of availableDecks; track deck.name) {
+        <option [value]="deck.name">{{ deck.displayLabel }}</option>
+        }
+      </datalist>
     </div>
 
     <div class="form-group">
