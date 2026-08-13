@@ -1,0 +1,57 @@
+<section class="achievement-edit-page">
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title>Edit Achievement</mat-card-title>
+            <mat-card-subtitle>Update the achievement details below.</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            @if (isLoading) {
+            <p class="status-text">Loading achievement…</p>
+            } @else if (error) {
+            <p class="error-text">{{ error }}</p>
+            } @else {
+            <form [formGroup]="achievementForm" (ngSubmit)="save()" class="achievement-form">
+                <mat-form-field appearance="outline">
+                    <mat-label>Title</mat-label>
+                    <input matInput formControlName="title" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Description</mat-label>
+                    <textarea matInput rows="4" formControlName="description"></textarea>
+                </mat-form-field>
+
+                <div class="row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Category</mat-label>
+                        <input matInput formControlName="category" />
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Rarity</mat-label>
+                        <mat-select formControlName="rarity">
+                            <mat-option value="common">Common</mat-option>
+                            <mat-option value="uncommon">Uncommon</mat-option>
+                            <mat-option value="rare">Rare</mat-option>
+                            <mat-option value="epic">Epic</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Points</mat-label>
+                        <input matInput type="number" min="1" formControlName="points" />
+                    </mat-form-field>
+                </div>
+
+                <div class="actions">
+                    <button mat-stroked-button type="button" routerLink="/achievements">Cancel</button>
+                    <button mat-raised-button color="primary" type="submit" [disabled]="isSubmitting">
+                        {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
+                    </button>
+                </div>
+            </form>
+            }
+        </mat-card-content>
+    </mat-card>
+</section>

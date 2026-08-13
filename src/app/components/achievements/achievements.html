@@ -1,0 +1,49 @@
+<section class="achievements-page">
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">League rewards</p>
+            <h1>Achievements</h1>
+        </div>
+        <button type="button" mat-stroked-button color="primary" (click)="loadAchievements()">
+            Refresh
+        </button>
+    </header>
+
+    @if (isLoading && achievements.length === 0) {
+    <div class="loading-state">Loading achievements...</div>
+    } @else if (error) {
+    <div class="error-state">{{ error }}</div>
+    } @else if (achievements.length === 0) {
+    <div class="loading-state">No achievements available yet.</div>
+    } @else {
+    <div class="achievement-grid">
+        @for (achievement of achievements; track achievement.id) {
+        <mat-card class="achievement-card">
+            <mat-card-header>
+                <div mat-card-avatar class="achievement-badge">{{ achievement.points }}</div>
+                <mat-card-title>{{ achievement.title }}</mat-card-title>
+                <mat-card-subtitle>{{ achievement.category }}</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+                <p class="description">{{ achievement.description }}</p>
+
+                <div class="meta-row">
+                    <span class="rarity-chip" [class]="getRarityClass(achievement.rarity)">
+                        {{ achievement.rarity | titlecase }}
+                    </span>
+                    <span class="points-label">{{ achievement.points }} pts</span>
+                </div>
+
+                <div class="card-actions">
+                    <button mat-stroked-button color="primary" type="button"
+                        [routerLink]="['/achievements', achievement.id, 'edit']" [state]="{ achievement: achievement }">
+                        Edit
+                    </button>
+                </div>
+            </mat-card-content>
+        </mat-card>
+        }
+    </div>
+    }
+</section>

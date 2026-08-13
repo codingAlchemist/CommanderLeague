@@ -262,6 +262,15 @@ async function readAchievements() {
   }
 }
 
+async function writeAchievements(achievements) {
+  try {
+    await fs.writeFile(ACHIEVEMENTS_FILE, JSON.stringify(achievements, null, 2));
+  } catch (error) {
+    console.error('Error writing achievements:', error);
+    throw error;
+  }
+}
+
 // Create pods (groupings) for a specific week from current signups
 async function createPodsForWeek(week) {
   const signups = await readSignups();
@@ -502,7 +511,11 @@ registerPodRoutes(app, {
   ensurePodsForWeek,
   shuffleArray,
 });
-registerAchievementRoutes(app, { readAchievements });
+registerAchievementRoutes(app, {
+  readAchievements,
+  writeAchievements,
+  getAchievementPointsByRarity,
+});
 
 app.get('/api/decks', async (req, res) => {
   try {

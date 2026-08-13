@@ -40,4 +40,15 @@ export const routes: Routes = [
         (m) => m.CurrentPlayerRankings,
       ),
   },
+  {
+    path: 'achievements',
+    loadComponent: () =>
+      import('./components/achievements/achievements').then((m) => m.Achievements),
+  },
+  {
+    path: 'achievements/:id/edit',
+    canActivate: [adminAuthGuard],
+    loadComponent: () =>
+      import('./components/achievement-edit/achievement-edit').then((m) => m.AchievementEdit),
+  },
 ];
