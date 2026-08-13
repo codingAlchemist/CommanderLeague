@@ -6,6 +6,7 @@ const Player = require('./models/Player');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
@@ -327,6 +328,34 @@ app.get('/api/precons', async (req, res) => {
   } catch (error) {
     console.error('Error reading precons:', error);
     res.status(500).json({ error: 'Failed to retrieve precons' });
+  }
+});
+
+// Player login
+app.post('/api/player/login', async (req, res) => {
+  try {
+    const { identifier } = req.body || {};
+
+    if (typeof identifier !== 'string' || identifier.trim() === '') {
+      return res.status(400).json({ error: 'Email or Discord username is required' });
+    }
+
+    const signups = await readSignups();
+    const normalizedIdentifier = identifier.trim().toLowerCase();
+    const player = signups.find((signup) => {
+      const email = typeof signup.email === 'string' ? signup.email.trim().toLowerCase() : '';
+      const discord = typeof signup.discordUsername === 'string' ? signup.discordUsername.trim().toLowerCase() : '';
+      return email === normalizedIdentifier || discord === normalizedIdentifier;
+    });
+
+    if (!player) {
+      return res.status(401).json({ error: 'Player not found' });
+    }
+
+    return res.json(player);
+  } catch (error) {
+    console.error('Error authenticating player:', error);
+    return res.status(500).json({ error: 'Failed to authenticate player' });
   }
 });
 
@@ -823,8 +852,8 @@ app.get('/api/health', (req, res) => {
 
 // Initialize and start server
 ensureDataDirectory().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
   });
 }).catch(error => {
   console.error('Failed to initialize server:', error);

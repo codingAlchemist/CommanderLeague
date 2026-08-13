@@ -2,6 +2,17 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 
+function passwordMatchValidator(control: {
+  get: (name: string) => { value?: string } | null;
+}): { [key: string]: boolean } | null {
+  const password = control.get('password')?.value;
+  const confirmPassword = control.get('confirmPassword')?.value;
+
+  return password && confirmPassword && password !== confirmPassword
+    ? { passwordMismatch: true }
+    : null;
+}
+
 interface Signup {
   id: string;
   playerName: string;
@@ -27,51 +38,63 @@ export class SignUp implements OnInit {
   signups: Signup[] = [];
   showModal = false;
 
-  signUpForm = new FormGroup({
-    playerName: new FormControl('', [Validators.required]),
-    email: new FormControl('', [Validators.required, Validators.email]),
-    discordUsername: new FormControl('', [Validators.required]),
-    deckName: new FormControl('', [Validators.required]),
-    commander: new FormControl('', [Validators.required]),
-  });
+  signUpForm = new FormGroup(
+    {
+      playerName: new FormControl('', [Validators.required]),
+      email: new FormControl('', [Validators.required, Validators.email]),
+      discordUsername: new FormControl('', [Validators.required]),
+      password: new FormControl('', [Validators.required, Validators.minLength(6)]),
+      confirmPassword: new FormControl('', [Validators.required]),
+      deckName: new FormControl('', [Validators.required]),
+      commander: new FormControl('', [Validators.required]),
+    },
+    { validators: passwordMatchValidator },
+  );
 
   ngOnInit() {
     this.loadSignups();
   }
 
   loadSignups() {
-    this.http.get<Signup[]>('/api/signups')
-      .subscribe({
-        next: (signups) => {
-          this.signups = signups;
-        },
-        error: (error) => {
-          console.error('Failed to load signups:', error);
-        }
-      });
+    this.http.get<Signup[]>('/api/signups').subscribe({
+      next: (signups) => {
+        this.signups = signups;
+      },
+      error: (error) => {
+        console.error('Failed to load signups:', error);
+      },
+    });
   }
 
   onSubmit() {
-    if (this.signUpForm.valid) {
-      this.isSubmitting = true;
-      this.submitMessage = '';
-      
-      this.http.post('/api/signups', this.signUpForm.value)
-        .subscribe({
-          next: (response) => {
-            console.log('Sign up successful:', response);
-            this.submitMessage = 'Sign up successful!';
-            this.signUpForm.reset();
-            this.isSubmitting = false;
-            this.loadSignups();
-          },
-          error: (error) => {
-            console.error('Sign up failed:', error);
-            this.submitMessage = error.error?.error || 'Sign up failed. Please try again.';
-            this.isSubmitting = false;
-          }
-        });
+    if (this.signUpForm.invalid) {
+      this.signUpForm.markAllAsTouched();
+      this.submitMessage = 'Please fix the highlighted form errors before submitting.';
+      return;
     }
+
+    this.isSubmitting = true;
+    this.submitMessage = '';
+
+    const payload = {
+      ...this.signUpForm.value,
+      password: this.signUpForm.value.password,
+    };
+
+    this.http.post('/api/signups', payload).subscribe({
+      next: (response) => {
+        console.log('Sign up successful:', response);
+        this.submitMessage = 'Sign up successful!';
+        this.signUpForm.reset();
+        this.isSubmitting = false;
+        this.loadSignups();
+      },
+      error: (error) => {
+        console.error('Sign up failed:', error);
+        this.submitMessage = error.error?.error || 'Sign up failed. Please try again.';
+        this.isSubmitting = false;
+      },
+    });
   }
 
   openModal() {
@@ -94,19 +117,18 @@ export class SignUp implements OnInit {
 
     this.isDeletingId = signup.id;
 
-    this.http.delete(`/api/signups/${signup.id}`)
-      .subscribe({
-        next: () => {
-          this.signups = this.signups.filter(currentSignup => currentSignup.id !== signup.id);
-          this.submitMessage = 'Sign up removed successfully.';
-          this.isDeletingId = null;
-        },
-        error: (error) => {
-          console.error('Failed to delete signup:', error);
-          this.submitMessage = error.error?.error || 'Failed to remove sign up. Please try again.';
-          this.isDeletingId = null;
-        }
-      });
+    this.http.delete(`/api/signups/${signup.id}`).subscribe({
+      next: () => {
+        this.signups = this.signups.filter((currentSignup) => currentSignup.id !== signup.id);
+        this.submitMessage = 'Sign up removed successfully.';
+        this.isDeletingId = null;
+      },
+      error: (error) => {
+        console.error('Failed to delete signup:', error);
+        this.submitMessage = error.error?.error || 'Failed to remove sign up. Please try again.';
+        this.isDeletingId = null;
+      },
+    });
   }
 
   clearAllSignups() {
@@ -121,18 +143,18 @@ export class SignUp implements OnInit {
 
     this.isClearingAll = true;
 
-    this.http.delete('/api/signups')
-      .subscribe({
-        next: () => {
-          this.signups = [];
-          this.submitMessage = 'All sign ups removed successfully.';
-          this.isClearingAll = false;
-        },
-        error: (error) => {
-          console.error('Failed to clear signups:', error);
-          this.submitMessage = error.error?.error || 'Failed to remove all sign ups. Please try again.';
-          this.isClearingAll = false;
-        }
-      });
+    this.http.delete('/api/signups').subscribe({
+      next: () => {
+        this.signups = [];
+        this.submitMessage = 'All sign ups removed successfully.';
+        this.isClearingAll = false;
+      },
+      error: (error) => {
+        console.error('Failed to clear signups:', error);
+        this.submitMessage =
+          error.error?.error || 'Failed to remove all sign ups. Please try again.';
+        this.isClearingAll = false;
+      },
+    });
   }
 }

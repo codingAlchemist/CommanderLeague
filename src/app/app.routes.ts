@@ -12,6 +12,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/sign-up/sign-up').then((m) => m.SignUp),
   },
   {
+    path: 'player-login',
+    loadComponent: () =>
+      import('./components/player-login/player-login').then((m) => m.PlayerLogin),
+  },
+  {
     path: 'tournament',
     canActivate: [adminAuthGuard],
     loadComponent: () => import('./components/tournament/tournament').then((m) => m.Tournament),

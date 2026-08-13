@@ -1,0 +1,36 @@
+<section class="player-login-shell">
+  <div class="hero-copy">
+    <h1>Player Login</h1>
+    <p>Sign in with the email or Discord name you used when you joined the league.</p>
+  </div>
+
+  <form class="login-card" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <label for="identifier">Email or Discord username</label>
+    <input id="identifier" type="text" formControlName="identifier"
+      placeholder="your.email@example.com or Username#1234" />
+
+    <button type="submit" [disabled]="loginForm.invalid || isSubmitting()">
+      {{ isSubmitting() ? 'Checking...' : 'Log In' }}
+    </button>
+
+    @if (statusMessage()) {
+    <p class="status-message" [class.success]="!!currentPlayer()" [class.error]="!currentPlayer()">
+      {{ statusMessage() }}
+    </p>
+    }
+
+    @if (currentPlayer()) {
+    <div class="player-summary">
+      <h2>{{ currentPlayer()?.playerName }}</h2>
+      <p><strong>Deck:</strong> {{ currentPlayer()?.deckName }}</p>
+      <p><strong>Commander:</strong> {{ currentPlayer()?.commander }}</p>
+      <p><strong>Discord:</strong> {{ currentPlayer()?.discordUsername }}</p>
+    </div>
+    }
+  </form>
+
+  <p class="helper-text">
+    New to the league?
+    <a href="javascript:void(0)" (click)="goToSignUp()">Create a sign-up entry</a>.
+  </p>
+</section>

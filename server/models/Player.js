@@ -1,9 +1,10 @@
 class Player {
-  constructor({ id, playerName, email, discordUsername, deckName, commander, createdAt, points }) {
+  constructor({ id, playerName, email, discordUsername, password, deckName, commander, createdAt, points }) {
     this.id = id || Date.now().toString();
     this.playerName = playerName;
     this.email = email;
     this.discordUsername = discordUsername;
+    this.password = password;
     this.deckName = deckName;
     this.commander = commander;
     this.points = points || 0;
@@ -26,6 +27,10 @@ class Player {
 
     if (!data.discordUsername || typeof data.discordUsername !== 'string' || data.discordUsername.trim() === '') {
       errors.push('Discord username is required and must be a non-empty string');
+    }
+
+    if (!data.password || typeof data.password !== 'string' || data.password.trim().length < 6) {
+      errors.push('Password is required and must be at least 6 characters long');
     }
 
     if (!data.deckName || typeof data.deckName !== 'string' || data.deckName.trim() === '') {
@@ -64,6 +69,7 @@ class Player {
       playerName: this.playerName,
       email: this.email,
       discordUsername: this.discordUsername,
+      password: this.password,
       deckName: this.deckName,
       commander: this.commander,
       points: this.points,
