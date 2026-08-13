@@ -39,6 +39,12 @@
         </button>
       </form>
 
+      <div class="admin-login-links">
+        <button mat-button color="accent" routerLink="/admin-change-password" type="button">
+          Change Password
+        </button>
+      </div>
+
       @if (statusMessage()) {
       <p class="status-message" aria-live="polite">{{ statusMessage() }}</p>
       }
