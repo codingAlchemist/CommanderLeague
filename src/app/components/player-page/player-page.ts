@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
 interface PlayerProfile {
@@ -16,11 +17,16 @@ interface PlayerProfile {
   deckList?: string[];
 }
 
+interface DeckSwapRequest {
+  cardIndex: number;
+  replacementCard: string;
+}
+
 @Component({
   selector: 'app-player-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <section class="player-page-shell">
       @if (isLoading()) {
@@ -73,12 +79,38 @@ interface PlayerProfile {
             <h2>Current Deck List</h2>
             @if (player()!.deckList && player()!.deckList!.length) {
               <ul class="deck-list">
-                @for (card of player()!.deckList; track card) {
-                  <li>{{ card }}</li>
+                @for (card of player()!.deckList; track card; let index = $index) {
+                  <li>
+                    <span>{{ card }}</span>
+                    <button type="button" class="swap-btn" (click)="selectCardToSwap(index)">
+                      Swap
+                    </button>
+                  </li>
                 }
               </ul>
             } @else {
               <p class="empty-state">No deck list available for this player yet.</p>
+            }
+
+            @if (selectedSwapIndex() !== null) {
+              <div class="swap-form">
+                <label for="replacement-card">Replace card {{ selectedSwapIndex()! + 1 }}</label>
+                <div class="swap-controls">
+                  <input
+                    id="replacement-card"
+                    type="text"
+                    [(ngModel)]="replacementCard"
+                    placeholder="Enter replacement card"
+                  />
+                  <button type="button" class="save-swap-btn" (click)="swapSelectedCard()">
+                    Save Swap
+                  </button>
+                </div>
+              </div>
+            }
+
+            @if (swapMessage()) {
+              <p class="swap-message" [class.success]="swapSuccess()">{{ swapMessage() }}</p>
             }
           </div>
         </article>
@@ -258,6 +290,68 @@ interface PlayerProfile {
         padding: 0.7rem 0.8rem;
         color: #1e293b;
         font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+      }
+
+      .swap-btn,
+      .save-swap-btn {
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+        padding: 0.5rem 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.2s ease;
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+      }
+
+      .swap-btn:hover,
+      .save-swap-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .swap-form {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+      }
+
+      .swap-form label {
+        display: block;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 0.5rem;
+      }
+
+      .swap-controls {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .swap-controls input {
+        flex: 1 1 220px;
+        min-height: 42px;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 0.7rem 0.9rem;
+        font-size: 1rem;
+      }
+
+      .swap-message {
+        margin-top: 0.9rem;
+        font-weight: 600;
+        color: #b91c1c;
+      }
+
+      .swap-message.success {
+        color: #166534;
       }
 
       .empty-state {
@@ -284,6 +378,10 @@ export class PlayerPage implements OnInit {
 
   readonly player = signal<PlayerProfile | null>(null);
   readonly isLoading = signal(true);
+  readonly selectedSwapIndex = signal<number | null>(null);
+  readonly swapMessage = signal('');
+  readonly swapSuccess = signal(false);
+  replacementCard = '';
 
   ngOnInit(): void {
     const playerId = this.route.snapshot.paramMap.get('id');
@@ -301,6 +399,45 @@ export class PlayerPage implements OnInit {
         console.error('Failed to load player profile:', error);
         this.player.set(null);
         this.isLoading.set(false);
+      },
+    });
+  }
+
+  selectCardToSwap(index: number): void {
+    this.selectedSwapIndex.set(index);
+    this.swapMessage.set('');
+    this.swapSuccess.set(false);
+    this.replacementCard = '';
+  }
+
+  swapSelectedCard(): void {
+    const player = this.player();
+    const selectedIndex = this.selectedSwapIndex();
+    const cardName = this.replacementCard.trim();
+
+    if (!player || selectedIndex === null || selectedIndex < 0 || !cardName) {
+      this.swapMessage.set('Choose a card and enter a replacement name before saving.');
+      this.swapSuccess.set(false);
+      return;
+    }
+
+    const request: DeckSwapRequest = {
+      cardIndex: selectedIndex,
+      replacementCard: cardName,
+    };
+
+    this.http.patch<PlayerProfile>(`/api/player/${player.id}/deck`, request).subscribe({
+      next: (updatedPlayer) => {
+        this.player.set(updatedPlayer);
+        this.selectedSwapIndex.set(null);
+        this.replacementCard = '';
+        this.swapMessage.set('Deck updated successfully.');
+        this.swapSuccess.set(true);
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Failed to swap card:', error);
+        this.swapMessage.set(error.error?.error || 'Unable to update your deck right now.');
+        this.swapSuccess.set(false);
       },
     });
   }

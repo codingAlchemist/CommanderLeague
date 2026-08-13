@@ -296,22 +296,22 @@ function buildDeckListForPlayer(player) {
     ],
     'golgari midrange': [
       'Sol Ring', 'Arcane Signet', 'Command Tower', 'Overgrown Tomb', 'Forest', 'Swamp', 'Farseek', 'Cultivate',
-      'Deadly Dispute', 'Nature's Lore', 'Sakura - Tribe Elder', 'Boseiju, Who Endures', 'Villainous Wealth',
+      'Deadly Dispute', 'Nature\'s Lore', 'Sakura - Tribe Elder', 'Boseiju, Who Endures', 'Villainous Wealth',
       'Meren of Clan Nel Toth', 'Ravenous Squirrel', 'Toxic Deluge', 'The Great Henge', 'Muldrotha, the Gravetide', 'Heroic Intervention'
     ],
     'mono-red burn': [
       'Sol Ring', 'Arcane Signet', 'Command Tower', 'Mountain', 'Rift Bolt', 'Lightning Bolt', 'Lava Spike',
       'Goblin Guide', 'Reckless Bushwhacker', 'Kiki-Jiki, Mirror Breaker', 'Searing Blaze', 'Monastery Swiftspear',
-      'Mishra's Bauble', 'Fiery Islet', 'Rift Elemental', 'Sundial of the Infinite', 'Manamorphose', 'Boros Charm'
+      'Mishra\'s Bauble', 'Fiery Islet', 'Rift Elemental', 'Sundial of the Infinite', 'Manamorphose', 'Boros Charm'
     ],
     'simic tempo': [
-      'The One Ring', 'Arcane Signet', 'Cultivate', 'Nature's Lore', 'Farseek', 'Growth Spiral', 'Mana Leak',
+      'The One Ring', 'Arcane Signet', 'Cultivate', 'Nature\'s Lore', 'Farseek', 'Growth Spiral', 'Mana Leak',
       'Mystic Remora', 'Frilled Mystic', 'Merfolk Trickster', 'Spell Pierce', 'Command Tower', 'Scourge of Fleets',
       'Panharmonicon', 'Simic Signet', 'Mosswort Bridge', 'Edric, Spymaster of Trest', 'Ghostly Pilferer'
     ],
     'rakdos reanimator': [
       'Sol Ring', 'Arcane Signet', 'Command Tower', 'Bloodstained Mire', 'Badlands', 'Grim Tutor', 'Dark Ritual',
-      'Reanimate', 'Animate Dead', 'Unearth', 'Vraska's Contempt', 'Beseech the Queen', 'Chainer, Dementia Master',
+      'Reanimate', 'Animate Dead', 'Unearth', 'Vraska\'s Contempt', 'Beseech the Queen', 'Chainer, Dementia Master',
       'Necromancy', 'Dread Return', 'Myrkul, Lord of Bones', 'Thought Distortion', 'Griselbrand'
     ],
     'selesnya tokens': [
@@ -325,19 +325,19 @@ function buildDeckListForPlayer(player) {
       'Shivan Reef', 'Chaos Warp', 'The One Ring', 'Frantic Search', 'Talisman of Creativity'
     ],
     'phyrexian combo': [
-      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Vraska's Contempt', 'All Is Dust', 'Noxious Revival', 'Glistener Elf',
+      'Sol Ring', 'Arcane Signet', 'Command Tower', 'Vraska\'s Contempt', 'All Is Dust', 'Noxious Revival', 'Glistener Elf',
       'Phyrexian Altar', 'Pact of Negation', 'Defense Grid', 'Aether Snap', 'Unmask', 'Beseech the Queen',
       'Vorinclex, Monstrous Raider', 'Toxic Deluge', 'Necropotence', 'Bala Ged Recovery', 'Barren Glory'
     ],
     'dimir milling': [
       'Sol Ring', 'Arcane Signet', 'Command Tower', 'Drowned Catacomb', 'Watery Grave', 'Overwhelming Intellect',
-      'Hedron Crab', 'Tishana's Tidebinder', 'Drown in Ichor', 'Unsubstantiated Claim', 'Phenax, God of Deception',
-      'Mind Grind', 'Necropotence', 'Murderous Rider', 'Dismal Backwater', 'Gaea's Blessing', 'Fractured Identity'
+      'Hedron Crab', 'Tishana\'s Tidebinder', 'Drown in Ichor', 'Unsubstantiated Claim', 'Phenax, God of Deception',
+      'Mind Grind', 'Necropotence', 'Murderous Rider', 'Dismal Backwater', 'Gaea\'s Blessing', 'Fractured Identity'
     ],
     'boros aggro': [
       'Sol Ring', 'Arcane Signet', 'Command Tower', 'Battlefield Forge', 'Wind-Scarred Crag', 'Lightning Helix', 'Path to Exile',
       'Rending Volley', 'Aurelia, the Warleader', 'Goblin Guide', 'Boros Charm', 'Adanto Vanguard', 'Sundial of the Infinite',
-      'Heroic Reinforcements', 'Inspiring Vantage', 'Rally the Peasants', 'Mishra's Factory'
+      'Heroic Reinforcements', 'Inspiring Vantage', 'Rally the Peasants', 'Mishra\'s Factory'
     ]
   };
 
@@ -350,7 +350,7 @@ function buildDeckListForPlayer(player) {
     'Command Tower',
     'Cultivate',
     'Farseek',
-    'Nature's Lore',
+    'Nature\'s Lore',
     'Heroic Intervention',
     'The One Ring',
     'Talisman of Curiosity',
@@ -374,10 +374,18 @@ function sanitizePlayer(player) {
   return safePlayer;
 }
 
+function getPlayerDeckList(player) {
+  if (Array.isArray(player?.deckList) && player.deckList.length > 0) {
+    return [...player.deckList];
+  }
+
+  return buildDeckListForPlayer(player);
+}
+
 function withDeckList(player) {
   return {
     ...sanitizePlayer(player),
-    deckList: buildDeckListForPlayer(player)
+    deckList: getPlayerDeckList(player)
   };
 }
 
@@ -604,6 +612,42 @@ app.patch('/api/player/:id/password', async (req, res) => {
   } catch (error) {
     console.error('Error setting player password:', error);
     return res.status(500).json({ error: 'Failed to save player password' });
+  }
+});
+
+app.patch('/api/player/:id/deck', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cardIndex, replacementCard } = req.body || {};
+
+    if (!Number.isInteger(cardIndex) || cardIndex < 0) {
+      return res.status(400).json({ error: 'A valid card index is required.' });
+    }
+
+    if (typeof replacementCard !== 'string' || replacementCard.trim() === '') {
+      return res.status(400).json({ error: 'A replacement card name is required.' });
+    }
+
+    const signups = await readSignups();
+    const playerIndex = signups.findIndex((signup) => signup.id === id);
+
+    if (playerIndex === -1) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    const deckList = getPlayerDeckList(signups[playerIndex]);
+    if (cardIndex >= deckList.length) {
+      return res.status(400).json({ error: 'The selected card index does not exist in this deck.' });
+    }
+
+    deckList[cardIndex] = replacementCard.trim();
+    signups[playerIndex].deckList = deckList;
+    await writeSignups(signups);
+
+    return res.json(withDeckList(signups[playerIndex]));
+  } catch (error) {
+    console.error('Error updating player deck:', error);
+    return res.status(500).json({ error: 'Failed to update deck list' });
   }
 });
 
