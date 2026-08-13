@@ -2,11 +2,11 @@
   "name": "commander-sign-up-sheet",
   "version": "0.0.0",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "ng": "mkdir -p .angular-home .angular-config && CI=true HOME=\"$PWD/.angular-home\" XDG_CONFIG_HOME=\"$PWD/.angular-config\" npx ng",
+    "start": "mkdir -p .angular-home .angular-config && CI=true HOME=\"$PWD/.angular-home\" XDG_CONFIG_HOME=\"$PWD/.angular-config\" npx ng serve --host 0.0.0.0",
+    "build": "mkdir -p .angular-home .angular-config && CI=true HOME=\"$PWD/.angular-home\" XDG_CONFIG_HOME=\"$PWD/.angular-config\" npx ng build",
+    "watch": "mkdir -p .angular-home .angular-config && CI=true HOME=\"$PWD/.angular-home\" XDG_CONFIG_HOME=\"$PWD/.angular-config\" npx ng build --watch --configuration development",
+    "test": "mkdir -p .angular-home .angular-config && CI=true HOME=\"$PWD/.angular-home\" XDG_CONFIG_HOME=\"$PWD/.angular-config\" npx ng test"
   },
   "prettier": {
     "printWidth": 100,
