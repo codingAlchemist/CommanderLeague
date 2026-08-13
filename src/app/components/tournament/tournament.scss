@@ -737,6 +737,75 @@
   }
 }
 
+.signup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.drop-btn,
+.absent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.16);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+.drop-btn {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  color: #f9fafb;
+}
+
+.absent-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.28);
+
+  &:hover:not(:disabled) {
+    box-shadow: 0 10px 24px rgba(220, 38, 38, 0.34);
+  }
+
+  &.absent {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 6px 18px rgba(22, 163, 74, 0.28);
+
+    &:hover:not(:disabled) {
+      box-shadow: 0 10px 24px rgba(22, 163, 74, 0.34);
+    }
+  }
+}
+
 @media (max-width: 1180px) {
   .tournament-header {
     align-items: flex-start;
