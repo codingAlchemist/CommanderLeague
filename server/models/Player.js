@@ -1,5 +1,5 @@
 class Player {
-  constructor({ id, playerName, email, discordUsername, deckName, commander, createdAt, points, absent }) {
+  constructor({ id, playerName, email, discordUsername, deckName, commander, createdAt, points, absent, completedAchievements, password }) {
     this.id = id || Date.now().toString();
     this.playerName = playerName;
     this.email = email;
@@ -9,6 +9,9 @@ class Player {
     this.commander = commander;
     this.points = points || 0;
     this.absent = absent === true;
+    this.completedAchievements = Array.isArray(completedAchievements)
+      ? completedAchievements
+      : [];
     this.createdAt = createdAt || new Date().toISOString();
   }
 
@@ -46,6 +49,10 @@ class Player {
       errors.push('Absent must be a boolean');
     }
 
+    if (data.completedAchievements !== undefined && !Array.isArray(data.completedAchievements)) {
+      errors.push('Completed achievements must be an array');
+    }
+
     return {
       isValid: errors.length === 0,
       errors
@@ -79,6 +86,7 @@ class Player {
       commander: this.commander,
       points: this.points,
       absent: this.absent,
+      completedAchievements: this.completedAchievements,
       createdAt: this.createdAt
     };
   }

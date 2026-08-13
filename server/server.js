@@ -8,6 +8,7 @@ const { registerAdminRoutes } = require('./routes/adminRoutes');
 const { registerPlayerRoutes } = require('./routes/playerRoutes');
 const { registerSignupRoutes } = require('./routes/signupRoutes');
 const { registerPodRoutes } = require('./routes/podRoutes');
+const { registerAchievementRoutes } = require('./routes/achievementRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,7 @@ const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
 const DECKS_FILE = path.join(__dirname, 'data', 'decks.json');
+const ACHIEVEMENTS_FILE = path.join(__dirname, 'data', 'achievements.json');
 const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
 const DEFAULT_TOTAL_WEEKS = 8;
 const MIN_TOTAL_WEEKS = 1;
@@ -73,6 +75,12 @@ async function ensureDataDirectory() {
     await fs.access(PODS_FILE);
   } catch {
     await fs.writeFile(PODS_FILE, JSON.stringify([], null, 2));
+  }
+
+  try {
+    await fs.access(ACHIEVEMENTS_FILE);
+  } catch {
+    await fs.writeFile(ACHIEVEMENTS_FILE, JSON.stringify([], null, 2));
   }
 
   await applyDefaultPasswordsToExistingPlayers();
@@ -219,6 +227,39 @@ async function readDecks() {
 
 async function getDecks() {
   return readDecks();
+}
+
+function getAchievementPointsByRarity(rarity) {
+  switch ((typeof rarity === 'string' ? rarity.toLowerCase() : '')) {
+    case 'common':
+      return 5;
+    case 'uncommon':
+      return 8;
+    case 'rare':
+      return 12;
+    case 'epic':
+      return 20;
+    default:
+      return 5;
+  }
+}
+
+async function readAchievements() {
+  try {
+    const data = await fs.readFile(ACHIEVEMENTS_FILE, 'utf8');
+    const parsed = JSON.parse(data);
+    const achievements = Array.isArray(parsed) ? parsed : [];
+
+    return achievements.map((achievement) => ({
+      ...achievement,
+      points: Number.isInteger(achievement?.points)
+        ? achievement.points
+        : getAchievementPointsByRarity(achievement?.rarity)
+    }));
+  } catch (error) {
+    console.error('Error reading achievements:', error);
+    return [];
+  }
 }
 
 // Create pods (groupings) for a specific week from current signups
@@ -461,6 +502,7 @@ registerPodRoutes(app, {
   ensurePodsForWeek,
   shuffleArray,
 });
+registerAchievementRoutes(app, { readAchievements });
 
 app.get('/api/decks', async (req, res) => {
   try {
@@ -469,6 +511,83 @@ app.get('/api/decks', async (req, res) => {
   } catch (error) {
     console.error('Error fetching decks:', error);
     res.status(500).json({ error: 'Failed to fetch decks' });
+  }
+});
+
+app.get('/api/week-state', async (req, res) => {
+  try {
+    const state = await readWeekState();
+    res.json(state);
+  } catch (error) {
+    console.error('Error fetching week state:', error);
+    res.status(500).json({ error: 'Failed to fetch week state' });
+  }
+});
+
+app.patch('/api/week-state', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const currentState = await readWeekState();
+    const totalWeeks = Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, currentState.totalWeeks));
+
+    const nextState = {
+      ...currentState,
+      currentWeek: body.currentWeek === null || body.currentWeek === undefined ? null : Number(body.currentWeek),
+      startedWeeks: Array.isArray(body.startedWeeks)
+        ? [...new Set(body.startedWeeks.map((week) => Number(week)).filter((week) => Number.isInteger(week) && week > 0 && week <= totalWeeks))].sort((a, b) => a - b)
+        : currentState.startedWeeks,
+      totalWeeks,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (nextState.currentWeek !== null && (nextState.currentWeek < 1 || nextState.currentWeek > totalWeeks)) {
+      nextState.currentWeek = null;
+    }
+
+    await writeWeekState(nextState);
+    res.json(nextState);
+  } catch (error) {
+    console.error('Error updating week state:', error);
+    res.status(500).json({ error: 'Failed to update week state' });
+  }
+});
+
+app.patch('/api/week-state/total-weeks', async (req, res) => {
+  try {
+    const delta = Number(req.body?.delta ?? 0);
+    const currentState = await readWeekState();
+    const nextTotalWeeks = Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, currentState.totalWeeks + (Number.isInteger(delta) ? delta : 0)));
+
+    const nextState = {
+      ...currentState,
+      totalWeeks: nextTotalWeeks,
+      currentWeek: currentState.currentWeek !== null && currentState.currentWeek > nextTotalWeeks ? null : currentState.currentWeek,
+      startedWeeks: currentState.startedWeeks.filter((week) => week <= nextTotalWeeks),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await writeWeekState(nextState);
+    res.json(nextState);
+  } catch (error) {
+    console.error('Error updating total weeks:', error);
+    res.status(500).json({ error: 'Failed to update total weeks' });
+  }
+});
+
+app.post('/api/week-state/reset', async (req, res) => {
+  try {
+    const resetState = {
+      currentWeek: null,
+      startedWeeks: [],
+      totalWeeks: DEFAULT_TOTAL_WEEKS,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await writeWeekState(resetState);
+    res.status(201).json(resetState);
+  } catch (error) {
+    console.error('Error resetting week state:', error);
+    res.status(500).json({ error: 'Failed to reset week state' });
   }
 });
 
