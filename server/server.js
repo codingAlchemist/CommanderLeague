@@ -9,6 +9,7 @@ const { registerPlayerRoutes } = require('./routes/playerRoutes');
 const { registerSignupRoutes } = require('./routes/signupRoutes');
 const { registerPodRoutes } = require('./routes/podRoutes');
 const { registerAchievementRoutes } = require('./routes/achievementRoutes');
+const Admin = require('./models/Admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -64,10 +65,10 @@ async function ensureDataDirectory() {
   try {
     await fs.access(ADMIN_CREDENTIALS_FILE);
   } catch {
-    const initialAdminCredentials = {
+    const initialAdminCredentials = Admin.fromRequest({
       username: 'jason.debottis@gmail.com',
       password: 'Area51Admin'
-    };
+    }).toJSON();
     await fs.writeFile(ADMIN_CREDENTIALS_FILE, JSON.stringify(initialAdminCredentials, null, 2));
   }
 
