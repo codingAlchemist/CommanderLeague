@@ -94,7 +94,7 @@ export class PlayerLogin {
       if (player.requiresPasswordSetup) {
         this.needsPasswordSetup.set(true);
         this.statusMessage.set(
-          `No password is set for ${player.playerName}. Create one to finish signing in.`,
+          `This is the default password for ${player.playerName}. Please choose a new password to continue.`,
         );
         return;
       }

@@ -14,6 +14,7 @@ const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.j
 const DEFAULT_TOTAL_WEEKS = 8;
 const MIN_TOTAL_WEEKS = 1;
 const MAX_TOTAL_WEEKS = 10;
+const DEFAULT_PLAYER_PASSWORD = 'CommanderLeague2026';
 
 // Middleware
 app.use(cors({
@@ -67,6 +68,13 @@ async function ensureDataDirectory() {
   } catch {
     await fs.writeFile(PODS_FILE, JSON.stringify([], null, 2));
   }
+
+  await applyDefaultPasswordsToExistingPlayers();
+}
+
+function playerNeedsPasswordReset(player) {
+  const storedPassword = typeof player?.password === 'string' ? player.password : '';
+  return storedPassword === '' || storedPassword === DEFAULT_PLAYER_PASSWORD;
 }
 
 // Read signups from file
@@ -79,11 +87,36 @@ async function readSignups() {
     }
     return parsed.map((signup) => ({
       ...signup,
+      password: typeof signup.password === 'string' && signup.password.trim() !== ''
+        ? signup.password
+        : DEFAULT_PLAYER_PASSWORD,
       absent: signup.absent === true
     }));
   } catch (error) {
     console.error('Error reading signups:', error);
     return [];
+  }
+}
+
+async function applyDefaultPasswordsToExistingPlayers() {
+  try {
+    const signups = await readSignups();
+    const needsUpdate = signups.some((signup) => typeof signup.password !== 'string' || signup.password.trim() === '');
+
+    if (!needsUpdate) {
+      return;
+    }
+
+    const updatedSignups = signups.map((signup) => ({
+      ...signup,
+      password: typeof signup.password === 'string' && signup.password.trim() !== ''
+        ? signup.password
+        : DEFAULT_PLAYER_PASSWORD,
+    }));
+
+    await writeSignups(updatedSignups);
+  } catch (error) {
+    console.error('Error applying default player passwords:', error);
   }
 }
 
@@ -516,11 +549,17 @@ app.post('/api/player/login', async (req, res) => {
     }
 
     const storedPassword = typeof player.password === 'string' ? player.password : '';
+    const requiresPasswordReset = playerNeedsPasswordReset(player);
 
-    if (!storedPassword) {
+    if (requiresPasswordReset) {
+      if (password !== DEFAULT_PLAYER_PASSWORD) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+
       return res.status(200).json({
         ...withDeckList(player),
-        requiresPasswordSetup: true
+        requiresPasswordSetup: true,
+        passwordNeedsReset: true
       });
     }
 
@@ -530,7 +569,8 @@ app.post('/api/player/login', async (req, res) => {
 
     return res.json({
       ...withDeckList(player),
-      requiresPasswordSetup: false
+      requiresPasswordSetup: false,
+      passwordNeedsReset: false
     });
   } catch (error) {
     console.error('Error authenticating player:', error);
