@@ -492,6 +492,7 @@ registerPlayerRoutes(app, {
   playerNeedsPasswordReset,
   withDeckList,
   getPlayerDeckList,
+  readAchievements,
 });
 registerSignupRoutes(app, {
   readSignups,

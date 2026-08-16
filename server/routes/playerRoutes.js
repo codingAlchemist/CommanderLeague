@@ -5,7 +5,8 @@ module.exports = {
     DEFAULT_PLAYER_PASSWORD,
     playerNeedsPasswordReset,
     withDeckList,
-    getPlayerDeckList
+    getPlayerDeckList,
+    readAchievements
   }) {
     app.post('/api/player/login', async (req, res) => {
       try {
@@ -42,7 +43,9 @@ module.exports = {
           return res.status(200).json({
             ...withDeckList(player),
             requiresPasswordSetup: true,
-            passwordNeedsReset: true
+            passwordNeedsReset: true,
+            message: "Login Successful. Please set a new password to continue.",
+            success: true
           });
         }
 
@@ -160,6 +163,72 @@ module.exports = {
       } catch (error) {
         console.error('Error retrieving player achievements:', error);
         return res.status(500).json({ error: 'Failed to retrieve player achievements' });
+      }
+    });
+
+    app.post('/api/player/:id/achievements', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { achievementId } = req.body || {};
+
+        if (typeof achievementId !== 'string' || achievementId.trim() === '') {
+          return res.status(400).json({ error: 'Achievement ID is required' });
+        }
+
+        const signups = await readSignups();
+        const playerIndex = signups.findIndex((signup) => signup.id === id);
+
+        if (playerIndex === -1) {
+          return res.status(404).json({ error: 'Player not found' });
+        }
+
+        if (typeof readAchievements !== 'function') {
+          return res.status(500).json({ error: 'Achievement service is unavailable' });
+        }
+
+        const achievements = await readAchievements();
+        const achievement = achievements.find((item) => item.id === achievementId);
+
+        if (!achievement) {
+          return res.status(404).json({ error: 'Achievement not found' });
+        }
+
+        const player = signups[playerIndex];
+        const existingCompleted = Array.isArray(player.completedAchievements)
+          ? player.completedAchievements
+          : [];
+
+        if (existingCompleted.includes(achievementId)) {
+          return res.status(200).json({
+            success: true,
+            playerId: player.id,
+            achievementId,
+            completedAchievements: existingCompleted,
+            points: Number.isFinite(player.points) ? Number(player.points) : 0,
+            message: 'Achievement already completed'
+          });
+        }
+
+        const nextCompleted = [...existingCompleted, achievementId];
+        const nextPoints = (Number.isFinite(player.points) ? Number(player.points) : 0)
+          + (Number.isInteger(achievement.points) ? achievement.points : 0);
+
+        player.completedAchievements = nextCompleted;
+        player.points = nextPoints;
+
+        await writeSignups(signups);
+
+        return res.status(201).json({
+          success: true,
+          playerId: player.id,
+          achievementId,
+          achievement,
+          completedAchievements: nextCompleted,
+          points: nextPoints
+        });
+      } catch (error) {
+        console.error('Error completing player achievement:', error);
+        return res.status(500).json({ error: 'Failed to complete achievement' });
       }
     });
 
