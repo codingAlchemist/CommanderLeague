@@ -8,6 +8,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/admin-login/admin-login').then((m) => m.AdminLogin),
   },
   {
+    path: 'admin-sign-up',
+    loadComponent: () =>
+      import('./components/admin-sign-up/admin-sign-up').then((m) => m.AdminSignUp),
+  },
+  {
     path: 'admin-change-password',
     loadComponent: () =>
       import('./components/admin-password-change/admin-password-change').then(
@@ -17,6 +22,11 @@ export const routes: Routes = [
   {
     path: 'sign-up',
     loadComponent: () => import('./components/sign-up/sign-up').then((m) => m.SignUp),
+  },
+  {
+    path: 'faq-and-rules',
+    loadComponent: () =>
+      import('./components/faq-and-rules/faq-and-rules').then((m) => m.FaqAndRules),
   },
   {
     path: 'player-login',

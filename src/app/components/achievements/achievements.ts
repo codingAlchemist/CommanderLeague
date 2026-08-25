@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
-import { RouterLink } from '@angular/router';
 
 import { AchievementNotificationService } from '../../services/achievement-notification.service';
 
@@ -20,9 +19,10 @@ interface Achievement {
 
 @Component({
   selector: 'app-achievements',
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatChipsModule, RouterLink],
+  imports: [CommonModule, MatButtonModule, MatCardModule, MatChipsModule],
   templateUrl: './achievements.html',
   styleUrl: './achievements.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Achievements implements OnInit {
   private readonly http = inject(HttpClient);
@@ -31,6 +31,15 @@ export class Achievements implements OnInit {
   achievements: Achievement[] = [];
   isLoading = false;
   error = '';
+  readonly isComingSoonDialogOpen = signal(false);
+
+  openComingSoonDialog(): void {
+    this.isComingSoonDialogOpen.set(true);
+  }
+
+  closeComingSoonDialog(): void {
+    this.isComingSoonDialogOpen.set(false);
+  }
 
   ngOnInit(): void {
     this.notificationService.observeAchievementsChanged().subscribe(() => {

@@ -1,7 +1,10 @@
 <main class="app-shell">
 	<nav class="tabs" aria-label="Main navigation">
 		<a routerLink="/sign-up" routerLinkActive="active">Sign Up Sheet</a>
+		<a routerLink="/faq-and-rules" routerLinkActive="active">FAQ &amp; Rules</a>
+		@if (!adminAuthService.isAdmin()) {
 		<a routerLink="/player-login" routerLinkActive="active">Player Login</a>
+		}
 		@if (adminAuthService.isAdmin()) {
 		<a routerLink="/achievements" routerLinkActive="active">Achievements</a>
 		<a routerLink="/tournament" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tournament</a>

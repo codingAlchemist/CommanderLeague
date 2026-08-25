@@ -1,0 +1,71 @@
+<section class="admin-sign-up-page">
+    <mat-card class="sign-up-card">
+        <mat-card-header>
+            <mat-card-title>Admin Sign Up</mat-card-title>
+            <mat-card-subtitle>Use the private invite token to create an admin account</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+            <form class="sign-up-form" [formGroup]="signUpForm" (ngSubmit)="onSubmit()" novalidate>
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label for="admin-sign-up-token">Private invite token</mat-label>
+                    <input id="admin-sign-up-token" matInput formControlName="token" type="password"
+                        placeholder="Enter your private token" autocomplete="one-time-code" required />
+                    @if (signUpForm.controls.token.touched && signUpForm.controls.token.hasError('required')) {
+                    <mat-error>Invite token is required.</mat-error>
+                    }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label for="admin-sign-up-email">Admin email</mat-label>
+                    <input id="admin-sign-up-email" matInput formControlName="email" type="email"
+                        placeholder="admin@example.com" autocomplete="email" required />
+                    @if (signUpForm.controls.email.touched && signUpForm.controls.email.hasError('required')) {
+                    <mat-error>Email is required.</mat-error>
+                    }
+                    @if (signUpForm.controls.email.touched && signUpForm.controls.email.hasError('email')) {
+                    <mat-error>Enter a valid email address.</mat-error>
+                    }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label for="admin-sign-up-password">Password</mat-label>
+                    <input id="admin-sign-up-password" matInput formControlName="password" type="password"
+                        placeholder="At least 8 characters" autocomplete="new-password" required />
+                    @if (signUpForm.controls.password.touched && signUpForm.controls.password.hasError('required')) {
+                    <mat-error>Password is required.</mat-error>
+                    }
+                    @if (signUpForm.controls.password.touched && signUpForm.controls.password.hasError('minlength')) {
+                    <mat-error>Password must be at least 8 characters.</mat-error>
+                    }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label for="admin-sign-up-confirm-password">Confirm password</mat-label>
+                    <input id="admin-sign-up-confirm-password" matInput formControlName="confirmPassword"
+                        type="password" placeholder="Re-enter your password" autocomplete="new-password" required />
+                    @if (signUpForm.controls.confirmPassword.touched &&
+                    signUpForm.controls.confirmPassword.hasError('required')) {
+                    <mat-error>Confirm your password.</mat-error>
+                    }
+                    @if (signUpForm.controls.confirmPassword.touched &&
+                    signUpForm.controls.confirmPassword.hasError('passwordMismatch')) {
+                    <mat-error>Passwords must match.</mat-error>
+                    }
+                </mat-form-field>
+
+                <button class="submit-button" mat-flat-button color="primary" type="submit"
+                    [disabled]="signUpForm.invalid || isSubmitting()">
+                    {{ isSubmitting() ? 'Creating Account...' : 'Create Admin Account' }}
+                </button>
+            </form>
+
+            @if (statusMessage()) {
+            <p class="status-message" [class.success-message]="isSuccessful()" aria-live="polite">{{ statusMessage() }}
+            </p>
+            }
+
+            <a class="back-link" routerLink="/admin-login">Back to Admin Login</a>
+        </mat-card-content>
+    </mat-card>
+</section>

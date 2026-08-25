@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const crypto = require('crypto');
 const Admin = require('../models/Admin');
 
 const ADMIN_FILE = path.join(__dirname, '..', 'data', 'admin-credentials.json');
@@ -46,6 +47,14 @@ async function writeAdminCredentials(credentials) {
     return currentAdmin.toJSON();
 }
 
+function tokensMatch(candidate, configuredToken) {
+    if (typeof candidate !== 'string' || candidate.length !== configuredToken.length) {
+        return false;
+    }
+
+    return crypto.timingSafeEqual(Buffer.from(candidate), Buffer.from(configuredToken));
+}
+
 module.exports = {
     readAdmins,
     writeAdmins,
@@ -57,11 +66,15 @@ module.exports = {
         writeAdminCredentials: writeAdminCredentialsFromDeps,
         readAdmins: readAdminsFromDeps,
         writeAdmins: writeAdminsFromDeps,
+        signupToken: signupTokenFromDeps,
     } = {}) {
         const resolveReadAdminCredentials = readAdminCredentialsFromDeps || readAdminCredentials;
         const resolveWriteAdminCredentials = writeAdminCredentialsFromDeps || writeAdminCredentials;
         const resolveReadAdmins = readAdminsFromDeps || readAdmins;
         const resolveWriteAdmins = writeAdminsFromDeps || writeAdmins;
+        const configuredSignupToken = typeof signupTokenFromDeps === 'string'
+            ? signupTokenFromDeps
+            : process.env.ADMIN_SIGNUP_TOKEN || '';
 
         app.get('/api/admins', async (req, res) => {
             try {
@@ -75,9 +88,13 @@ module.exports = {
 
         app.post('/api/admins', async (req, res) => {
             try {
-                const { username, password } = req.body || {};
+                const { username, password, token } = req.body || {};
                 const trimmedUsername = typeof username === 'string' ? username.trim() : '';
                 const trimmedPassword = typeof password === 'string' ? password.trim() : '';
+
+                if (!configuredSignupToken || !tokensMatch(token, configuredSignupToken)) {
+                    return res.status(403).json({ error: 'A valid admin sign-up token is required' });
+                }
 
                 if (trimmedUsername === '' || trimmedPassword === '') {
                     return res.status(400).json({ error: 'Username and password are required' });
@@ -98,7 +115,10 @@ module.exports = {
                 const nextAdmins = [...admins, createdAdmin.toJSON()];
                 await resolveWriteAdmins(nextAdmins);
 
-                return res.status(201).json(createdAdmin.toJSON());
+                return res.status(201).json({
+                    username: createdAdmin.username,
+                    createdAt: createdAdmin.createdAt,
+                });
             } catch (error) {
                 console.error('Error creating admin:', error);
                 return res.status(500).json({ error: 'Failed to create admin' });
@@ -191,11 +211,11 @@ module.exports = {
                 return res.status(400).json({ error: 'Username and password are required' });
             }
 
-            let adminCredentials;
+            let admins;
             try {
-                adminCredentials = await resolveReadAdminCredentials();
+                admins = await resolveReadAdmins();
             } catch (error) {
-                console.error('Error reading admin credentials:', error);
+                console.error('Error reading admin accounts:', error);
                 console.error('Admin login failed: credentials source unavailable', {
                     username: attemptedUsername,
                     ip: requestIp
@@ -204,10 +224,12 @@ module.exports = {
             }
 
             const normalizedUsername = username.trim().toLowerCase();
-            const isValidUsername = normalizedUsername === adminCredentials.username.trim().toLowerCase();
-            const isValidPassword = password === adminCredentials.password;
+            const matchingAdmin = admins.find((admin) =>
+                normalizedUsername === String(admin.username || '').trim().toLowerCase()
+                && password === admin.password
+            );
 
-            if (!isValidUsername || !isValidPassword) {
+            if (!matchingAdmin) {
                 console.warn('Admin login rejected: invalid credentials', {
                     username: normalizedUsername,
                     ip: requestIp

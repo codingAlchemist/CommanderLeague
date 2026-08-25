@@ -4,9 +4,14 @@
             <p class="eyebrow">League rewards</p>
             <h1>Achievements</h1>
         </div>
-        <button type="button" mat-stroked-button color="primary" (click)="loadAchievements()">
-            Refresh
-        </button>
+        <div class="header-actions">
+            <button type="button" mat-stroked-button color="primary" (click)="openComingSoonDialog()">
+                Editing coming soon
+            </button>
+            <button type="button" mat-stroked-button color="primary" (click)="loadAchievements()">
+                Refresh
+            </button>
+        </div>
     </header>
 
     @if (isLoading && achievements.length === 0) {
@@ -36,8 +41,8 @@
                 </div>
 
                 <div class="card-actions">
-                    <button mat-stroked-button color="primary" type="button"
-                        [routerLink]="['/achievements', achievement.id, 'edit']" [state]="{ achievement: achievement }">
+                    <button mat-stroked-button color="primary" type="button" disabled
+                        aria-label="Editing achievements is coming soon">
                         Edit
                     </button>
                 </div>
@@ -47,3 +52,17 @@
     </div>
     }
 </section>
+
+@if (isComingSoonDialogOpen()) {
+<div class="dialog-backdrop" role="presentation" (click)="closeComingSoonDialog()">
+    <section class="coming-soon-dialog" role="dialog" aria-modal="true" aria-labelledby="coming-soon-title"
+        (click)="$event.stopPropagation()">
+        <p class="eyebrow">Feature update</p>
+        <h2 id="coming-soon-title">Achievement editing is coming soon</h2>
+        <p>Achievements are currently view-only. Editing tools will be available in a future update.</p>
+        <button type="button" mat-flat-button color="primary" (click)="closeComingSoonDialog()">
+            Got it
+        </button>
+    </section>
+</div>
+}

@@ -20,6 +20,8 @@ For development with auto-reload:
 npm run dev
 ```
 
+Set `ADMIN_SIGNUP_TOKEN` in the server environment before starting the server. This secret is required to create a new admin account and must not be added to the Angular application.
+
 ## API Endpoints
 
 - `GET /api/health` - Health check

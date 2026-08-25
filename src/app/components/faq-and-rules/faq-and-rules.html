@@ -1,0 +1,61 @@
+<section class="faq-page">
+  <header class="page-header">
+    <p class="eyebrow">Before your first game</p>
+    <h1>FAQ &amp; Rules</h1>
+    <p class="intro">
+      Everything you need to know about joining the Commander League and showing up ready to play.
+    </p>
+  </header>
+
+  <div class="content-grid">
+    <section class="panel questions-panel" aria-labelledby="questions-heading">
+      <div class="section-heading">
+        <span class="section-number">01</span>
+        <h2 id="questions-heading">Frequently asked questions</h2>
+      </div>
+
+      <div class="faq-list">
+        @for (item of faqItems; track item.question) {
+        <details>
+          <summary>{{ item.question }}</summary>
+          <p>{{ item.answer }}</p>
+        </details>
+        }
+      </div>
+    </section>
+
+    <section class="panel rules-panel" aria-labelledby="rules-heading">
+      <div class="section-heading">
+        <span class="section-number">02</span>
+        <h2 id="rules-heading">League rules</h2>
+      </div>
+
+      <ol class="rules-list">
+        <li>
+          <strong>Bring a pre-con.</strong>
+          <span>Play with an unaltered, commercially released pre-con deck.</span>
+        </li>
+        <li>
+          <strong>Play your scheduled pod.</strong>
+          <span>Each week, the organizer will place registered players into pods for multiplayer games. At the end of
+            each week, each player will be able to upgrade their deck by adding cards from a purchased play booster pack
+            or a single card that is currently valued at 20 dollars or less.</span>
+        </li>
+        <li>
+          <strong>Keep games welcoming.</strong>
+          <span>Follow Commander&apos;s social contract: communicate clearly, play fairly, and help new players get
+            involved.</span>
+        </li>
+        <li>
+          <strong>Complete the league.</strong>
+          <span>Show up for weekly games and track results with the organizer so the league stays current.</span>
+        </li>
+      </ol>
+
+      <div class="note">
+        <strong>Not sure about a ruling?</strong>
+        <p>Ask the organizer before the game begins. The goal is a friendly, competitive night for everyone.</p>
+      </div>
+    </section>
+  </div>
+</section>

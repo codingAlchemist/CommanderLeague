@@ -20,6 +20,7 @@ test('registerAdminRoutes creates an admin via POST /api/admins', async () => {
         writeAdmins: async (admins) => {
             savedAdmins = admins;
         },
+        signupToken: 'owner-invite-token',
     });
 
     const server = app.listen(0);
@@ -33,6 +34,7 @@ test('registerAdminRoutes creates an admin via POST /api/admins', async () => {
             body: JSON.stringify({
                 username: 'new-admin@example.com',
                 password: 'super-secret',
+                token: 'owner-invite-token',
             }),
         });
 
@@ -40,6 +42,39 @@ test('registerAdminRoutes creates an admin via POST /api/admins', async () => {
         const payload = await response.json();
         assert.equal(payload.username, 'new-admin@example.com');
         assert.equal(savedAdmins.length, 2);
+    } finally {
+        await new Promise((resolve, reject) =>
+            server.close((error) => (error ? reject(error) : resolve()))
+        );
+    }
+});
+
+test('registerAdminRoutes rejects an invalid admin sign-up token', async () => {
+    const app = express();
+    app.use(express.json());
+
+    registerAdminRoutes(app, {
+        readAdmins: async () => [],
+        writeAdmins: async () => { },
+        signupToken: 'owner-invite-token',
+    });
+
+    const server = app.listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    const port = server.address().port;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:${port}/api/admins`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: 'new-admin@example.com',
+                password: 'super-secret',
+                token: 'wrong-token',
+            }),
+        });
+
+        assert.equal(response.status, 403);
     } finally {
         await new Promise((resolve, reject) =>
             server.close((error) => (error ? reject(error) : resolve()))
