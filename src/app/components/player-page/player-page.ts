@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface PlayerProfile {
   id: string;
@@ -41,9 +41,14 @@ interface DeckSwapRequest {
               <p class="eyebrow">League Player</p>
               <h1>{{ player()!.playerName }}</h1>
             </div>
-            <span class="status-pill" [class.absent]="player()!.absent">
-              {{ player()!.absent ? 'Absent' : 'Active' }}
-            </span>
+            <div class="header-actions">
+              <span class="status-pill" [class.absent]="player()!.absent">
+                {{ player()!.absent ? 'Absent' : 'Active' }}
+              </span>
+              <button type="button" class="sign-out-btn" (click)="signOut()">
+                Sign Out
+              </button>
+            </div>
           </header>
 
           <div class="stats-grid">
@@ -217,6 +222,28 @@ interface DeckSwapRequest {
         box-shadow: 0 8px 18px rgba(239, 68, 68, 0.22);
       }
 
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .sign-out-btn {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: white;
+        color: #334155;
+        padding: 0.55rem 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+      }
+
+      .sign-out-btn:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -368,6 +395,11 @@ interface DeckSwapRequest {
           flex-direction: column;
           align-items: flex-start;
         }
+
+        .header-actions {
+          width: 100%;
+          justify-content: space-between;
+        }
       }
     `,
   ],
@@ -375,6 +407,7 @@ interface DeckSwapRequest {
 export class PlayerPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly player = signal<PlayerProfile | null>(null);
   readonly isLoading = signal(true);
@@ -401,6 +434,10 @@ export class PlayerPage implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  signOut(): void {
+    void this.router.navigate(['/player-login']);
   }
 
   selectCardToSwap(index: number): void {

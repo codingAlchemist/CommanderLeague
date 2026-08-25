@@ -4,6 +4,8 @@ module.exports = {
     registerSignupRoutes(app, {
         readSignups,
         writeSignups,
+        saveDeckForPlayer,
+        getPlayerDeckList,
         readWeekState,
         readPods,
         writePods,
@@ -48,7 +50,12 @@ module.exports = {
                 }
 
                 const newPlayer = new Player(req.body);
+                newPlayer.deck.cards = getPlayerDeckList(newPlayer);
 
+                await saveDeckForPlayer(
+                    newPlayer.playerName,
+                    newPlayer.deck.toJSON(),
+                );
                 signups.push(newPlayer.toJSON());
                 await writeSignups(signups);
 

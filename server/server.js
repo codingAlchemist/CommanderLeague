@@ -17,7 +17,8 @@ const HOST = process.env.HOST || '0.0.0.0';
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
-const DECKS_FILE = path.join(__dirname, 'data', 'decks.json');
+const PLAYER_DECKS_FILE = path.join(__dirname, 'data', 'playerDecks.json');
+const PRECONS_FILE = path.join(__dirname, 'data', 'precons-2023.json');
 const ACHIEVEMENTS_FILE = path.join(__dirname, 'data', 'achievements.json');
 const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
 const DEFAULT_TOTAL_WEEKS = 8;
@@ -217,7 +218,7 @@ async function writePods(pods) {
 
 async function readDecks() {
   try {
-    const data = await fs.readFile(DECKS_FILE, 'utf8');
+    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
     const parsed = JSON.parse(data);
     return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
@@ -226,8 +227,56 @@ async function readDecks() {
   }
 }
 
+async function saveDeckForPlayer(playerName, deck) {
+  let playerDecks = {};
+
+  try {
+    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
+    const parsed = JSON.parse(data);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      playerDecks = parsed;
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('Error reading player decks:', error);
+      throw error;
+    }
+  }
+
+  playerDecks[playerName] = deck;
+  await fs.writeFile(PLAYER_DECKS_FILE, JSON.stringify(playerDecks, null, 2));
+}
+
 async function getDecks() {
-  return readDecks();
+  const decks = await readDecks();
+  if (decks.length > 0) {
+    return decks;
+  }
+
+  try {
+    const data = await fs.readFile(PRECONS_FILE, 'utf8');
+    const precons = JSON.parse(data);
+
+    if (!Array.isArray(precons)) {
+      return [];
+    }
+
+    return precons.flatMap((precon) => {
+      if (!Array.isArray(precon?.decks)) {
+        return [];
+      }
+
+      return precon.decks
+        .filter((deck) => typeof deck?.name === 'string' && deck.name.trim() !== '')
+        .map((deck) => ({
+          name: deck.name.trim(),
+          setCode: typeof precon.set === 'string' ? precon.set.trim() : 'UNK',
+        }));
+    });
+  } catch (error) {
+    console.error('Error reading pre-con decks:', error);
+    return [];
+  }
 }
 
 function getAchievementPointsByRarity(rarity) {
@@ -497,6 +546,8 @@ registerPlayerRoutes(app, {
 registerSignupRoutes(app, {
   readSignups,
   writeSignups,
+  saveDeckForPlayer,
+  getPlayerDeckList,
   readWeekState,
   readPods,
   writePods,

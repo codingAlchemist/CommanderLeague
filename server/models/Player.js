@@ -1,11 +1,22 @@
+const Deck = require('./Deck');
+
 class Player {
-  constructor({ id, playerName, email, discordUsername, deckName, commander, createdAt, points, absent, completedAchievements, password }) {
+  constructor({ id, playerName, email, discordUsername, deckName, deck, commander, createdAt, points, absent, completedAchievements, password }) {
     this.id = id || Date.now().toString();
     this.playerName = playerName;
     this.email = email;
     this.discordUsername = discordUsername;
     this.password = password;
     this.deckName = deckName;
+    this.deck = deck instanceof Deck
+      ? deck
+      : deck && typeof deck === 'object'
+        ? new Deck(
+          deck.name || deckName,
+          Array.isArray(deck.cards) ? deck.cards : [],
+          deck.commander || commander,
+        )
+        : new Deck(deckName, [], commander);
     this.commander = commander;
     this.points = points || 0;
     this.absent = absent === true;
@@ -83,6 +94,7 @@ class Player {
       discordUsername: this.discordUsername,
       password: this.password,
       deckName: this.deckName,
+      deck: this.deck.toJSON(),
       commander: this.commander,
       points: this.points,
       absent: this.absent,
