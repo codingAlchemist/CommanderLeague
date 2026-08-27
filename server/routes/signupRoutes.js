@@ -5,6 +5,7 @@ module.exports = {
         readSignups,
         writeSignups,
         saveDeckForPlayer,
+        getDeckByName,
         getPlayerDeckList,
         readWeekState,
         readPods,
@@ -50,7 +51,17 @@ module.exports = {
                 }
 
                 const newPlayer = new Player(req.body);
-                newPlayer.deck.cards = getPlayerDeckList(newPlayer);
+                const selectedDeck = await getDeckByName(newPlayer.deckName);
+                newPlayer.deck.cards = selectedDeck && Array.isArray(selectedDeck.cards)
+                    ? selectedDeck.cards.flatMap((card) => {
+                        if (typeof card?.name !== 'string' || card.name.trim() === '') {
+                            return [];
+                        }
+
+                        const count = Number.isInteger(card.count) && card.count > 0 ? card.count : 1;
+                        return Array(count).fill(card.name.trim());
+                    })
+                    : getPlayerDeckList(newPlayer);
 
                 await saveDeckForPlayer(
                     newPlayer.playerName,

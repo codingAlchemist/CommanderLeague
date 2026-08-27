@@ -10,7 +10,7 @@ import { AdminAuthService } from './services/admin-auth.service';
   styleUrl: './app.scss',
 })
 export class App {
-  private readonly router = inject(Router);
+  readonly router = inject(Router);
   readonly adminAuthService = inject(AdminAuthService);
 
   protected readonly title = signal('commander-sign-up-sheet');

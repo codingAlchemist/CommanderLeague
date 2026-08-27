@@ -1,0 +1,153 @@
+[
+  {
+    "set": "Phyrexia: All Will Be One",
+    "releaseDate": "2023-02-10",
+    "decks": [
+      {
+        "name": "Corruption Absolute",
+        "commander": "Norn's Decree",
+        "colors": ["W", "B"]
+      },
+      {
+        "name": "Rebellion Rising",
+        "commander": "Neyali, Suns' Vanguard",
+        "colors": ["R", "W"]
+      },
+      {
+        "name": "Phyrexian Surge",
+        "commander": "Ixhel, Scion of Atraxa",
+        "colors": ["W", "B", "G"]
+      },
+      {
+        "name": "Corrupting Influence",
+        "commander": "Brimaz, Blight of Oreskos",
+        "colors": ["W"]
+      }
+    ]
+  },
+  {
+    "set": "March of the Machine",
+    "releaseDate": "2023-04-21",
+    "decks": [
+      {
+        "name": "Cavalry Charge",
+        "commander": "Kasla, the Broken Halo",
+        "colors": ["W", "U", "R"]
+      },
+      {
+        "name": "Divine Convocation",
+        "commander": "Bright-Palm, Soul Awakener",
+        "colors": ["W", "R"]
+      },
+      {
+        "name": "Tinker Time",
+        "commander": "Gimbal, Gremlin Prodigy",
+        "colors": ["U", "R"]
+      },
+      {
+        "name": "Call for Backup",
+        "commander": "Anara, Wolvid Familiar / Prava of the Steel Legion",
+        "colors": ["W", "G"]
+      },
+      {
+        "name": "Growing Threat",
+        "commander": "Bant Landfall",
+        "colors": ["W", "U", "G"]
+      }
+    ]
+  },
+  {
+    "set": "Commander Masters",
+    "releaseDate": "2023-08-04",
+    "decks": [
+      {
+        "name": "Planeswalker Party",
+        "commander": "Commodore Guff",
+        "colors": ["W", "U", "R"]
+      },
+      {
+        "name": "Eldrazi Unbound",
+        "commander": "Zhulodok, Void Gorger",
+        "colors": ["C"]
+      },
+      {
+        "name": "Sliver Swarm",
+        "commander": "Sliver Gravemother",
+        "colors": ["W", "U", "B", "R", "G"]
+      },
+      {
+        "name": "Enduring Enchantments",
+        "commander": "Anikthea, Hand of Erebos",
+        "colors": ["W", "B", "G"]
+      }
+    ]
+  },
+  {
+    "set": "Wilds of Eldraine",
+    "releaseDate": "2023-09-08",
+    "decks": [
+      {
+        "name": "Virtue and Valor",
+        "commander": "Ellivere of the Wild Court",
+        "colors": ["W", "G"]
+      },
+      {
+        "name": "Fae Dominion",
+        "commander": "Tegwyll, Duke of Splendor",
+        "colors": ["U", "B"]
+      }
+    ]
+  },
+  {
+    "set": "Doctor Who",
+    "releaseDate": "2023-10-13",
+    "decks": [
+      {
+        "name": "Timey-Wimey",
+        "commander": "The Tenth Doctor / Rose Tyler",
+        "colors": ["U", "R"]
+      },
+      {
+        "name": "Blast from the Past",
+        "commander": "The Fourth Doctor / Sarah Jane Smith",
+        "colors": ["W", "U", "G"]
+      },
+      {
+        "name": "Paradox Power",
+        "commander": "The Thirteenth Doctor / Yasmin Khan",
+        "colors": ["U", "R", "G"]
+      },
+      {
+        "name": "Masters of Evil",
+        "commander": "Davros, Dalek Creator",
+        "colors": ["U", "B", "R"]
+      }
+    ]
+  },
+  {
+    "set": "The Lost Caverns of Ixalan",
+    "releaseDate": "2023-11-17",
+    "decks": [
+      {
+        "name": "Explorers of the Deep",
+        "commander": "Hakbal of the Surging Soul",
+        "colors": ["U", "G"]
+      },
+      {
+        "name": "Ahoy Mateys",
+        "commander": "Brass's Bounty",
+        "colors": ["U", "B", "R"]
+      },
+      {
+        "name": "Blood Rites",
+        "commander": "Carmen, Cruel Skymarcher",
+        "colors": ["B", "R"]
+      },
+      {
+        "name": "Veloci-Ramp-Tor",
+        "commander": "Pantlaza, Sun-Favored",
+        "colors": ["W", "R", "G"]
+      }
+    ]
+  }
+]

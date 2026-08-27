@@ -1,0 +1,37 @@
+[
+  {
+    "id": "1787797009773",
+    "playerName": "Jason DeBottis",
+    "email": "jason.debottis@gmail.com",
+    "discordUsername": "jasondebottis",
+    "password": "Tenx_0817!",
+    "deckName": "Temur Roar",
+    "deck": {
+      "name": "Temur Roar",
+      "cards": [
+        "Ureni",
+        "Sol Ring",
+        "Arcane Signet",
+        "Command Tower",
+        "Cultivate",
+        "Farseek",
+        "Nature's Lore",
+        "Heroic Intervention",
+        "The One Ring",
+        "Talisman of Curiosity",
+        "Mana Confluence",
+        "Mystic Remora",
+        "Boseiju, Who Endures",
+        "Finale of Devotion",
+        "Sakura-Tribe Elder",
+        "Swords to Plowshares"
+      ],
+      "commander": "Ureni"
+    },
+    "commander": "Ureni",
+    "points": 0,
+    "absent": false,
+    "completedAchievements": [],
+    "createdAt": "2026-08-27T02:16:49.773Z"
+  }
+]

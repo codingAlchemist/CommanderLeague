@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const Player = require('./models/Player');
+const { registerDeckRoutes, saveDeckForPlayer, getDeckByName } = require('./routes/deckRoutes');
 const { registerEventRoutes } = require('./routes/eventRoutes');
 const { registerAdminRoutes } = require('./routes/adminRoutes');
 const { registerPlayerRoutes } = require('./routes/playerRoutes');
@@ -17,8 +18,6 @@ const HOST = process.env.HOST || '0.0.0.0';
 const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
 const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
 const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
-const PLAYER_DECKS_FILE = path.join(__dirname, 'data', 'playerDecks.json');
-const PRECONS_FILE = path.join(__dirname, 'data', 'precons-2023.json');
 const ACHIEVEMENTS_FILE = path.join(__dirname, 'data', 'achievements.json');
 const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
 const DEFAULT_TOTAL_WEEKS = 8;
@@ -213,69 +212,6 @@ async function writePods(pods) {
   } catch (error) {
     console.error('Error writing pods:', error);
     throw error;
-  }
-}
-
-async function readDecks() {
-  try {
-    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
-    const parsed = JSON.parse(data);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error('Error reading decks:', error);
-    return [];
-  }
-}
-
-async function saveDeckForPlayer(playerName, deck) {
-  let playerDecks = {};
-
-  try {
-    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
-    const parsed = JSON.parse(data);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      playerDecks = parsed;
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.error('Error reading player decks:', error);
-      throw error;
-    }
-  }
-
-  playerDecks[playerName] = deck;
-  await fs.writeFile(PLAYER_DECKS_FILE, JSON.stringify(playerDecks, null, 2));
-}
-
-async function getDecks() {
-  const decks = await readDecks();
-  if (decks.length > 0) {
-    return decks;
-  }
-
-  try {
-    const data = await fs.readFile(PRECONS_FILE, 'utf8');
-    const precons = JSON.parse(data);
-
-    if (!Array.isArray(precons)) {
-      return [];
-    }
-
-    return precons.flatMap((precon) => {
-      if (!Array.isArray(precon?.decks)) {
-        return [];
-      }
-
-      return precon.decks
-        .filter((deck) => typeof deck?.name === 'string' && deck.name.trim() !== '')
-        .map((deck) => ({
-          name: deck.name.trim(),
-          setCode: typeof precon.set === 'string' ? precon.set.trim() : 'UNK',
-        }));
-    });
-  } catch (error) {
-    console.error('Error reading pre-con decks:', error);
-    return [];
   }
 }
 
@@ -547,6 +483,7 @@ registerSignupRoutes(app, {
   readSignups,
   writeSignups,
   saveDeckForPlayer,
+  getDeckByName,
   getPlayerDeckList,
   readWeekState,
   readPods,
@@ -569,16 +506,7 @@ registerAchievementRoutes(app, {
   writeAchievements,
   getAchievementPointsByRarity,
 });
-
-app.get('/api/decks', async (req, res) => {
-  try {
-    const decks = await getDecks();
-    res.json(decks);
-  } catch (error) {
-    console.error('Error fetching decks:', error);
-    res.status(500).json({ error: 'Failed to fetch decks' });
-  }
-});
+registerDeckRoutes(app, {});
 
 app.get('/api/week-state', async (req, res) => {
   try {

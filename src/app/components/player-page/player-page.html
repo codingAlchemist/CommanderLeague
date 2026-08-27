@@ -1,0 +1,99 @@
+<section class="player-page-shell">
+    @if (isLoading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading player profile...</p>
+    </div>
+    } @else if (player()) {
+    <article class="player-card">
+        <header class="player-header">
+            <div>
+                <p class="eyebrow">League Player</p>
+                <h1>{{ player()!.playerName }}</h1>
+            </div>
+            <div class="header-actions">
+                <span class="status-pill" [class.absent]="player()!.absent">
+                    {{ player()!.absent ? 'Absent' : 'Active' }}
+                </span>
+                <button type="button" class="sign-out-btn" (click)="signOut()">Sign Out</button>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="label">Points</span>
+                <strong>{{ player()!.points }}</strong>
+            </div>
+            <div class="stat-box">
+                <span class="label">Deck</span>
+                <strong>{{ player()!.deckName }}</strong>
+            </div>
+            <div class="stat-box">
+                <span class="label">Commander</span>
+                <strong>{{ player()!.commander }}</strong>
+            </div>
+            <div class="stat-box">
+                <span class="label">Discord</span>
+                <strong>{{ player()!.discordUsername }}</strong>
+            </div>
+        </div>
+
+        <div class="details-card">
+            <h2>Player Details</h2>
+            <div class="detail-list">
+                <p><strong>Email:</strong> {{ player()!.email }}</p>
+                <p><strong>Deck Name:</strong> {{ player()!.deckName }}</p>
+                <p><strong>Commander:</strong> {{ player()!.commander }}</p>
+                <p><strong>Joined:</strong> {{ formatDate(player()!.createdAt) }}</p>
+            </div>
+        </div>
+
+        <div class="deck-card">
+            <h2>Current Deck List</h2>
+            @if (player()!.deckList && player()!.deckList!.length) {
+            <div class="deck-groups">
+                @for (group of groupedDeckList(); track group.type) {
+                <section class="deck-group">
+                    <h3>{{ group.type }}</h3>
+                    <ul class="deck-list">
+                        @for (card of group.cards; track card.index) {
+                        <li>
+                            <span>{{ card.name }}</span>
+                            <button type="button" class="swap-btn" (click)="selectCardToSwap(card.index)">
+                                Swap
+                            </button>
+                        </li>
+                        }
+                    </ul>
+                </section>
+                }
+            </div>
+            } @else {
+            <p class="empty-state">No deck list available for this player yet.</p>
+            }
+
+            @if (selectedSwapIndex() !== null) {
+            <div class="swap-form">
+                <label for="replacement-card">Replace card {{ selectedSwapIndex()! + 1 }}</label>
+                <div class="swap-controls">
+                    <input id="replacement-card" type="text" [(ngModel)]="replacementCard"
+                        placeholder="Enter replacement card" />
+                    <button type="button" class="save-swap-btn" (click)="swapSelectedCard()">
+                        Save Swap
+                    </button>
+                </div>
+            </div>
+            }
+
+            @if (swapMessage()) {
+            <p class="swap-message" [class.success]="swapSuccess()">{{ swapMessage() }}</p>
+            }
+        </div>
+    </article>
+    } @else {
+    <div class="error-state">
+        <h2>Player not found</h2>
+        <p>We couldn’t load that player profile.</p>
+    </div>
+    }
+</section>

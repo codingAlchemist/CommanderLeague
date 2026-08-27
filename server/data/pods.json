@@ -1,0 +1,614 @@
+[
+  {
+    "week": 1,
+    "groups": [
+      {
+        "groupNumber": 1,
+        "players": [
+          {
+            "id": "1781207100802",
+            "playerName": "Caelan Anderson",
+            "email": "caelan@hotmail.com",
+            "discordUsername": "K_Len",
+            "deckName": "Squirreled Away",
+            "commander": "Hazel",
+            "points": 0,
+            "createdAt": "2026-06-11T19:45:00.802Z"
+          },
+          {
+            "id": "1784746873438",
+            "playerName": "Luke Wood",
+            "email": "Arczire@yahoo.com",
+            "discordUsername": "Amphy/Luke or Sleepysheepy",
+            "deckName": "Revival Tactics",
+            "commander": "Terra, Herald of Hope",
+            "points": 1,
+            "createdAt": "2026-07-22T19:01:13.438Z"
+          },
+          {
+            "id": "1784928796773",
+            "playerName": "Matteo Cubero",
+            "email": "matthew.cubero@gmail.com",
+            "discordUsername": "Cloaking_Rope",
+            "deckName": "Frodo & Sam",
+            "commander": "Frodo, adventurous hobbit & Sam, loyal attendant",
+            "points": 0,
+            "createdAt": "2026-07-24T21:33:16.773Z"
+          },
+          {
+            "id": "1784924554502",
+            "playerName": "Hunter",
+            "email": "hcasterline4@gmail.com",
+            "discordUsername": "V1nythr0ne939",
+            "deckName": "World shaper",
+            "commander": "Hearthhull, the world seed",
+            "points": 0,
+            "createdAt": "2026-07-24T20:22:34.502Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 2,
+        "players": [
+          {
+            "id": "1784928801195",
+            "playerName": "Talen Harrington",
+            "email": "projectunova14@gmail.com",
+            "discordUsername": ".birdfoot",
+            "deckName": "World Shaper",
+            "commander": "Hearthhull, the Worldseed",
+            "points": 0,
+            "createdAt": "2026-07-24T21:33:21.195Z"
+          },
+          {
+            "id": "1784160490220",
+            "playerName": "James S",
+            "email": "jsalerno11@gmail.com",
+            "discordUsername": "GenesisPrime",
+            "deckName": "Supervillain ",
+            "commander": "Doctor Doom, King of Latveria",
+            "points": 1,
+            "createdAt": "2026-07-16T00:08:10.220Z"
+          },
+          {
+            "id": "1784929550439",
+            "playerName": "Jason Debottis",
+            "email": "jason.debottis@gmail.com",
+            "discordUsername": "Jason.DeBottis ",
+            "deckName": "Doom Prevails",
+            "commander": "Doom",
+            "points": 0,
+            "createdAt": "2026-07-24T21:45:50.439Z"
+          },
+          {
+            "id": "1783876459763",
+            "playerName": "Kolin Lent",
+            "email": "kolin.lent@gmail.com",
+            "discordUsername": "Indiandiablo",
+            "deckName": "Probably the food deck from lotr",
+            "commander": "Frodo and sam",
+            "points": 1,
+            "createdAt": "2026-07-12T17:14:19.764Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 3,
+        "players": [
+          {
+            "id": "1781191807516",
+            "playerName": "Mike Serenita ",
+            "email": "michaelserenita@gmail.com",
+            "discordUsername": "Evil Dad II - Dad by Dawn",
+            "deckName": "Enduring Enchantments ",
+            "commander": "Anikthea, Hand of Erebos",
+            "points": 0,
+            "createdAt": "2026-06-11T15:30:07.516Z"
+          },
+          {
+            "id": "1784924501735",
+            "playerName": "Noah",
+            "email": "nlamarre24@icloud.com",
+            "discordUsername": "Pirates1522",
+            "deckName": "Counter Blitz",
+            "commander": "Tidus, Yuna’s Guardian",
+            "points": 0,
+            "createdAt": "2026-07-24T20:21:41.735Z"
+          },
+          {
+            "id": "1781643663067",
+            "playerName": "Matthew Bollinger",
+            "email": "Bollingermatthew2010@yahoo.com",
+            "discordUsername": "Mr.Brightside",
+            "deckName": "Scions and Spellcraft",
+            "commander": "Y-shtola, Nights Blessed",
+            "points": 0,
+            "createdAt": "2026-06-16T21:01:03.067Z"
+          },
+          {
+            "id": "1784924565960",
+            "playerName": "Brett Bottoff",
+            "email": "cymeru@gmail.com",
+            "discordUsername": "Cymeru",
+            "deckName": "Auntie Ool",
+            "commander": "Auntie Ool, Cursewretch",
+            "points": 0,
+            "createdAt": "2026-07-24T20:22:45.960Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 4,
+        "players": [
+          {
+            "id": "1784924509404",
+            "playerName": "Joe",
+            "email": "josephsnavely91@gmail.com",
+            "discordUsername": "Its_Yah_Boi_",
+            "deckName": "Draconic Destruction ",
+            "commander": "Atarka, World Render",
+            "points": 0,
+            "createdAt": "2026-07-24T20:21:49.404Z"
+          },
+          {
+            "id": "1784925065793",
+            "playerName": "Wes",
+            "email": "weslang1010@yahoo.com",
+            "discordUsername": "Na",
+            "deckName": "Sauron,lord of the rings",
+            "commander": "Sauron",
+            "points": 0,
+            "createdAt": "2026-07-24T20:31:05.793Z"
+          },
+          {
+            "id": "1784298426135",
+            "playerName": "Pauley Bethoney",
+            "email": "dadstuff2025@gmail.com",
+            "discordUsername": "Pauley",
+            "deckName": "Turtles or something from the shop",
+            "commander": "Tbd",
+            "points": 0,
+            "createdAt": "2026-07-17T14:27:06.135Z"
+          },
+          {
+            "id": "1784179833813",
+            "playerName": "Krys Coit",
+            "email": "Kryscoit@gmail.com",
+            "discordUsername": "Indiandiablo",
+            "deckName": "Necron",
+            "commander": "Main commander ",
+            "points": 1,
+            "createdAt": "2026-07-16T05:30:33.813Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 5,
+        "players": [
+          {
+            "id": "1784928858589",
+            "playerName": "Séamus Gailor",
+            "email": "sefinn5678@gmail.com",
+            "discordUsername": "finnpossible#1997",
+            "deckName": "Revival Trance",
+            "commander": "Terra, Herald of Hope",
+            "points": 0,
+            "createdAt": "2026-07-24T21:34:18.589Z"
+          },
+          {
+            "id": "1784927269763",
+            "playerName": "Dave Fuller",
+            "email": "dcf2@alfred.edu",
+            "discordUsername": "AlphaCatCat#8479",
+            "deckName": "Dance of the Elements",
+            "commander": "Ashling, the Limitless",
+            "points": 1,
+            "createdAt": "2026-07-24T21:07:49.763Z"
+          },
+          {
+            "id": "1784924651773",
+            "playerName": "Justin Lamarre",
+            "email": "justinlamarre8@gmail.com",
+            "discordUsername": "NYDKPhobos",
+            "deckName": "Host of mordor",
+            "commander": "Sauron Lord of the Rings",
+            "points": 0,
+            "createdAt": "2026-07-24T20:24:11.773Z"
+          },
+          {
+            "id": "1784929340195",
+            "playerName": "Nathan Glennie",
+            "email": "nathanglennie18@gmail.com",
+            "discordUsername": "muffinmuncher3717 ",
+            "deckName": "Quandrix Unlimited",
+            "commander": "Simone, Infinite Analyst",
+            "points": 0,
+            "createdAt": "2026-07-24T21:42:20.195Z"
+          }
+        ]
+      }
+    ],
+    "createdAt": "2026-07-31T21:03:45.426Z"
+  },
+  {
+    "week": 2,
+    "groups": [
+      {
+        "groupNumber": 1,
+        "players": [
+          {
+            "id": "1784929340195",
+            "playerName": "Nathan Glennie",
+            "email": "nathanglennie18@gmail.com",
+            "discordUsername": "muffinmuncher3717 ",
+            "deckName": "Quandrix Unlimited",
+            "commander": "Simone, Infinite Analyst",
+            "points": 0,
+            "createdAt": "2026-07-24T21:42:20.195Z"
+          },
+          {
+            "id": "1784298426135",
+            "playerName": "Pauley Bethoney",
+            "email": "dadstuff2025@gmail.com",
+            "discordUsername": "Pauley",
+            "deckName": "Turtles or something from the shop",
+            "commander": "Tbd",
+            "points": 0,
+            "createdAt": "2026-07-17T14:27:06.135Z"
+          },
+          {
+            "id": "1784160490220",
+            "playerName": "James S",
+            "email": "jsalerno11@gmail.com",
+            "discordUsername": "GenesisPrime",
+            "deckName": "Supervillain ",
+            "commander": "Doctor Doom, King of Latveria",
+            "points": 1,
+            "createdAt": "2026-07-16T00:08:10.220Z"
+          },
+          {
+            "id": "1781191807516",
+            "playerName": "Mike Serenita ",
+            "email": "michaelserenita@gmail.com",
+            "discordUsername": "Evil Dad II - Dad by Dawn",
+            "deckName": "Enduring Enchantments ",
+            "commander": "Anikthea, Hand of Erebos",
+            "points": 0,
+            "createdAt": "2026-06-11T15:30:07.516Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 2,
+        "players": [
+          {
+            "id": "1784927269763",
+            "playerName": "Dave Fuller",
+            "email": "dcf2@alfred.edu",
+            "discordUsername": "AlphaCatCat#8479",
+            "deckName": "Dance of the Elements",
+            "commander": "Ashling, the Limitless",
+            "points": 1,
+            "createdAt": "2026-07-24T21:07:49.763Z"
+          },
+          {
+            "id": "1784928858589",
+            "playerName": "Séamus Gailor",
+            "email": "sefinn5678@gmail.com",
+            "discordUsername": "finnpossible#1997",
+            "deckName": "Revival Trance",
+            "commander": "Terra, Herald of Hope",
+            "points": 0,
+            "createdAt": "2026-07-24T21:34:18.589Z"
+          },
+          {
+            "id": "1784746873438",
+            "playerName": "Luke Wood",
+            "email": "Arczire@yahoo.com",
+            "discordUsername": "Amphy/Luke or Sleepysheepy",
+            "deckName": "Revival Tactics",
+            "commander": "Terra, Herald of Hope",
+            "points": 1,
+            "createdAt": "2026-07-22T19:01:13.438Z"
+          },
+          {
+            "id": "1783876459763",
+            "playerName": "Kolin Lent",
+            "email": "kolin.lent@gmail.com",
+            "discordUsername": "Indiandiablo",
+            "deckName": "Probably the food deck from lotr",
+            "commander": "Frodo and sam",
+            "points": 1,
+            "createdAt": "2026-07-12T17:14:19.764Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 3,
+        "players": [
+          {
+            "id": "1784925065793",
+            "playerName": "Wes",
+            "email": "weslang1010@yahoo.com",
+            "discordUsername": "Na",
+            "deckName": "Sauron,lord of the rings",
+            "commander": "Sauron",
+            "points": 0,
+            "createdAt": "2026-07-24T20:31:05.793Z"
+          },
+          {
+            "id": "1784924501735",
+            "playerName": "Noah",
+            "email": "nlamarre24@icloud.com",
+            "discordUsername": "Pirates1522",
+            "deckName": "Counter Blitz",
+            "commander": "Tidus, Yuna’s Guardian",
+            "points": 0,
+            "createdAt": "2026-07-24T20:21:41.735Z"
+          },
+          {
+            "id": "1784929550439",
+            "playerName": "Jason Debottis",
+            "email": "jason.debottis@gmail.com",
+            "discordUsername": "Jason.DeBottis ",
+            "deckName": "Doom Prevails",
+            "commander": "Doom",
+            "points": 0,
+            "createdAt": "2026-07-24T21:45:50.439Z"
+          },
+          {
+            "id": "1781207100802",
+            "playerName": "Caelan Anderson",
+            "email": "caelan@hotmail.com",
+            "discordUsername": "K_Len",
+            "deckName": "Squirreled Away",
+            "commander": "Hazel",
+            "points": 0,
+            "createdAt": "2026-06-11T19:45:00.802Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 4,
+        "players": [
+          {
+            "id": "1784924651773",
+            "playerName": "Justin Lamarre",
+            "email": "justinlamarre8@gmail.com",
+            "discordUsername": "NYDKPhobos",
+            "deckName": "Host of mordor",
+            "commander": "Sauron Lord of the Rings",
+            "points": 0,
+            "createdAt": "2026-07-24T20:24:11.773Z"
+          },
+          {
+            "id": "1784924554502",
+            "playerName": "Hunter",
+            "email": "hcasterline4@gmail.com",
+            "discordUsername": "V1nythr0ne939",
+            "deckName": "World shaper",
+            "commander": "Hearthhull, the world seed",
+            "points": 0,
+            "createdAt": "2026-07-24T20:22:34.502Z"
+          },
+          {
+            "id": "1784924565960",
+            "playerName": "Brett Bottoff",
+            "email": "cymeru@gmail.com",
+            "discordUsername": "Cymeru",
+            "deckName": "Auntie Ool",
+            "commander": "Auntie Ool, Cursewretch",
+            "points": 0,
+            "createdAt": "2026-07-24T20:22:45.960Z"
+          },
+          {
+            "id": "1784924509404",
+            "playerName": "Joe",
+            "email": "josephsnavely91@gmail.com",
+            "discordUsername": "Its_Yah_Boi_",
+            "deckName": "Draconic Destruction ",
+            "commander": "Atarka, World Render",
+            "points": 0,
+            "createdAt": "2026-07-24T20:21:49.404Z"
+          }
+        ]
+      },
+      {
+        "groupNumber": 5,
+        "players": [
+          {
+            "id": "1784928801195",
+            "playerName": "Talen Harrington",
+            "email": "projectunova14@gmail.com",
+            "discordUsername": ".birdfoot",
+            "deckName": "World Shaper",
+            "commander": "Hearthhull, the Worldseed",
+            "points": 0,
+            "createdAt": "2026-07-24T21:33:21.195Z"
+          },
+          {
+            "id": "1784179833813",
+            "playerName": "Krys Coit",
+            "email": "Kryscoit@gmail.com",
+            "discordUsername": "Indiandiablo",
+            "deckName": "Necron",
+            "commander": "Main commander ",
+            "points": 1,
+            "createdAt": "2026-07-16T05:30:33.813Z"
+          },
+          {
+            "id": "1785534160608",
+            "playerName": "Jerimiah",
+            "email": "jerimiahcarroll3@gmail.com",
+            "discordUsername": "Jcarroll3",
+            "deckName": "Temur roar",
+            "commander": "Eshki temur's roar",
+            "points": 0,
+            "createdAt": "2026-07-31T21:42:40.608Z"
+          },
+          {
+            "id": "1784928796773",
+            "playerName": "Matteo Cubero",
+            "email": "matthew.cubero@gmail.com",
+            "discordUsername": "Cloaking_Rope",
+            "deckName": "Frodo & Sam",
+            "commander": "Frodo, adventurous hobbit & Sam, loyal attendant",
+            "points": 0,
+            "createdAt": "2026-07-24T21:33:16.773Z"
+          }
+        ]
+      }
+    ],
+    "createdAt": "2026-07-31T22:05:41.794Z"
+  },
+  {
+    "week": 3,
+    "groups": [
+      {
+        "groupNumber": 1,
+        "players": [
+          {
+            "id": "1784927269763",
+            "playerName": "Dave Fuller",
+            "email": "dcf2@alfred.edu",
+            "discordUsername": "AlphaCatCat#8479",
+            "deckName": "Dance of the Elements",
+            "commander": "Ashling, the Limitless",
+            "points": 3,
+            "createdAt": "2026-07-24T21:07:49.763Z",
+            "absent": false
+          },
+          {
+            "id": "1786745393248",
+            "playerName": "Nick Nelson",
+            "email": "nicknelson0896@gmail.com",
+            "discordUsername": "Chonkster4259",
+            "deckName": "World Shaper",
+            "commander": "Szarel, Genesis Shepherd",
+            "points": 0,
+            "absent": false,
+            "createdAt": "2026-08-14T22:09:53.248Z"
+          },
+          {
+            "id": "1784298426135",
+            "playerName": "Pauley Bethoney",
+            "email": "dadstuff2025@gmail.com",
+            "discordUsername": "Pauley",
+            "deckName": "Turtles or something from the shop",
+            "commander": "Tbd",
+            "points": 0,
+            "createdAt": "2026-07-17T14:27:06.135Z",
+            "absent": false
+          },
+          {
+            "id": "1784928801195",
+            "playerName": "Talen Harrington",
+            "email": "projectunova14@gmail.com",
+            "discordUsername": ".birdfoot",
+            "deckName": "World Shaper",
+            "commander": "Hearthhull, the Worldseed",
+            "points": 0,
+            "createdAt": "2026-07-24T21:33:21.195Z",
+            "absent": false
+          }
+        ],
+        "winnerId": "1784928801195"
+      },
+      {
+        "groupNumber": 2,
+        "players": [
+          {
+            "id": "1784925065793",
+            "playerName": "Wes",
+            "email": "weslang1010@yahoo.com",
+            "discordUsername": "Na",
+            "deckName": "Sauron,lord of the rings",
+            "commander": "Sauron",
+            "points": 1,
+            "createdAt": "2026-07-24T20:31:05.793Z",
+            "absent": false
+          },
+          {
+            "id": "1784924554502",
+            "playerName": "Hunter",
+            "email": "hcasterline4@gmail.com",
+            "discordUsername": "V1nythr0ne939",
+            "deckName": "World shaper",
+            "commander": "Hearthhull, the world seed",
+            "points": 0,
+            "createdAt": "2026-07-24T20:22:34.502Z",
+            "absent": false
+          },
+          {
+            "id": "1784928796773",
+            "playerName": "Matteo Cubero",
+            "email": "matthew.cubero@gmail.com",
+            "discordUsername": "Cloaking_Rope",
+            "deckName": "Frodo & Sam",
+            "commander": "Frodo, adventurous hobbit & Sam, loyal attendant",
+            "points": 0,
+            "createdAt": "2026-07-24T21:33:16.773Z",
+            "absent": false
+          },
+          {
+            "id": "1784929340195",
+            "playerName": "Nathan Glennie",
+            "email": "nathanglennie18@gmail.com",
+            "discordUsername": "muffinmuncher3717 ",
+            "deckName": "Quandrix Unlimited",
+            "commander": "Simone, Infinite Analyst",
+            "points": 1,
+            "createdAt": "2026-07-24T21:42:20.195Z",
+            "absent": false
+          }
+        ],
+        "winnerId": null
+      },
+      {
+        "groupNumber": 3,
+        "players": [
+          {
+            "id": "1784160490220",
+            "playerName": "James S",
+            "email": "jsalerno11@gmail.com",
+            "discordUsername": "GenesisPrime",
+            "deckName": "Supervillain ",
+            "commander": "Doctor Doom, King of Latveria",
+            "points": 1,
+            "createdAt": "2026-07-16T00:08:10.220Z",
+            "absent": false
+          },
+          {
+            "id": "1784924509404",
+            "playerName": "Joe",
+            "email": "josephsnavely91@gmail.com",
+            "discordUsername": "Its_Yah_Boi_",
+            "deckName": "Draconic Destruction ",
+            "commander": "Atarka, World Render",
+            "points": 0,
+            "createdAt": "2026-07-24T20:21:49.404Z",
+            "absent": false
+          },
+          {
+            "id": "1784928858589",
+            "playerName": "Séamus Gailor",
+            "email": "sefinn5678@gmail.com",
+            "discordUsername": "finnpossible#1997",
+            "deckName": "Revival Trance",
+            "commander": "Terra, Herald of Hope",
+            "points": 0,
+            "createdAt": "2026-07-24T21:34:18.589Z",
+            "absent": false
+          }
+        ],
+        "winnerId": "1784160490220"
+      }
+    ],
+    "createdAt": "2026-08-14T23:24:52.188Z"
+  },
+  {
+    "week": 4,
+    "groups": [],
+    "createdAt": "2026-08-27T01:51:21.065Z"
+  }
+]

@@ -1,6 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { AdminAuthService } from '../../services/admin-auth.service';
 
 function passwordMatchValidator(control: {
   get: (name: string) => { value?: string } | null;
@@ -37,6 +39,8 @@ interface DeckOption {
 })
 export class SignUp implements OnInit {
   private http = inject(HttpClient);
+  private readonly router = inject(Router);
+  readonly isAdmin = inject(AdminAuthService).isAdmin;
   submitMessage = '';
   isSubmitting = false;
   isDeletingId: string | null = null;
@@ -64,7 +68,7 @@ export class SignUp implements OnInit {
   }
 
   loadDecks() {
-    this.http.get<DeckOption[] | { decks?: DeckOption[] } | unknown>('/api/decks').subscribe({
+    this.http.get<DeckOption[] | { decks?: DeckOption[] } | unknown>('/api/decks/all').subscribe({
       next: (response) => {
         const deckEntries = Array.isArray(response)
           ? response
@@ -146,13 +150,11 @@ export class SignUp implements OnInit {
       password: this.signUpForm.value.password,
     };
 
-    this.http.post('/api/signups', payload).subscribe({
+    this.http.post<Signup>('/api/signups', payload).subscribe({
       next: (response) => {
         console.log('Sign up successful:', response);
-        this.submitMessage = 'Sign up successful!';
-        this.signUpForm.reset();
         this.isSubmitting = false;
-        this.loadSignups();
+        void this.router.navigate(['/player', response.id]);
       },
       error: (error) => {
         console.error('Sign up failed:', error);

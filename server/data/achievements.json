@@ -1,0 +1,162 @@
+[
+  {
+    "id": "ach-001",
+    "title": "First Blood",
+    "description": "Win your first Commander game and get the table talking.",
+    "rarity": "common",
+    "category": "victory",
+    "points": 5
+  },
+  {
+    "id": "ach-002",
+    "title": "Commander of the Day",
+    "description": "Finish a pod with a decisive win and leave the rest of the table stunned.",
+    "rarity": "rare",
+    "category": "victory",
+    "points": 10
+  },
+  {
+    "id": "ach-003",
+    "title": "The Long Con",
+    "description": "Win a match after surviving a full game of board wipes and political chaos.",
+    "rarity": "uncommon",
+    "category": "strategy",
+    "points": 8
+  },
+  {
+    "id": "ach-004",
+    "title": "Ramp and Roll",
+    "description": "Cast five or more mana-producing creatures in a single turn.",
+    "rarity": "common",
+    "category": "mana",
+    "points": 6
+  },
+  {
+    "id": "ach-005",
+    "title": "Storm Front",
+    "description": "Resolve a spell combo that sends the table into panic mode.",
+    "rarity": "rare",
+    "category": "combo",
+    "points": 12
+  },
+  {
+    "id": "ach-006",
+    "title": "Counterspell Veteran",
+    "description": "Stop three opposing spells in a single game without flinching.",
+    "rarity": "uncommon",
+    "category": "interaction",
+    "points": 7
+  },
+  {
+    "id": "ach-007",
+    "title": "Treasure Hunter",
+    "description": "Accumulate more treasure and value than the rest of the table combined.",
+    "rarity": "common",
+    "category": "economy",
+    "points": 5
+  },
+  {
+    "id": "ach-008",
+    "title": "Battlefield Sculptor",
+    "description": "Build a board state so intricate it looks like a battlefield masterpiece.",
+    "rarity": "rare",
+    "category": "board",
+    "points": 9
+  },
+  {
+    "id": "ach-009",
+    "title": "Grim Reaper",
+    "description": "Drain the table dry and make your commander the last one standing.",
+    "rarity": "epic",
+    "category": "victory",
+    "points": 18
+  },
+  {
+    "id": "ach-010",
+    "title": "Sevenfold Fate",
+    "description": "Have your commander survive seven separate threats in one game.",
+    "rarity": "rare",
+    "category": "survival",
+    "points": 11
+  },
+  {
+    "id": "ach-011",
+    "title": "Dicey Situation",
+    "description": "Win a game where the table was one dice roll away from a total reset.",
+    "rarity": "uncommon",
+    "category": "luck",
+    "points": 6
+  },
+  {
+    "id": "ach-012",
+    "title": "Voltron Vindicator",
+    "description": "Turn your commander into a single unstoppable attacker and finish the job.",
+    "rarity": "rare",
+    "category": "combat",
+    "points": 13
+  },
+  {
+    "id": "ach-013",
+    "title": "No One Escapes",
+    "description": "Lock down the battlefield so well that nobody can realistically untap.",
+    "rarity": "uncommon",
+    "category": "control",
+    "points": 8
+  },
+  {
+    "id": "ach-014",
+    "title": "Dreadful Returns",
+    "description": "Reanimate a legendary creature and make the table regret it instantly.",
+    "rarity": "common",
+    "category": "recursion",
+    "points": 6
+  },
+  {
+    "id": "ach-015",
+    "title": "Might of the Mountain",
+    "description": "Deal 40 or more combat damage in one turn with your commander leading the charge.",
+    "rarity": "epic",
+    "category": "combat",
+    "points": 20
+  },
+  {
+    "id": "ach-016",
+    "title": "The Perfect Sacrifice",
+    "description": "Trade a valuable creature for a game-ending setup and still come out ahead.",
+    "rarity": "uncommon",
+    "category": "strategy",
+    "points": 9
+  },
+  {
+    "id": "ach-017",
+    "title": "Tithe of the Table",
+    "description": "Generate enough mana and value to make the entire pod feel a little poorer.",
+    "rarity": "common",
+    "category": "economy",
+    "points": 5
+  },
+  {
+    "id": "ach-018",
+    "title": "Temple of Doom",
+    "description": "Use your commander to force a full-table crisis and still negotiate your way out.",
+    "rarity": "rare",
+    "category": "politics",
+    "points": 10
+  },
+  {
+    "id": "ach-019",
+    "title": "Cursed by the Gods",
+    "description": "Flip a game on its head by surviving a board wipe and coming back stronger.",
+    "rarity": "rare",
+    "category": "resilience",
+    "points": 12
+  },
+  {
+    "id": "ach-020",
+    "title": "Legendary Legacy",
+    "description": "End a game with your commander surviving every major threat and all the bragging rights.",
+    "rarity": "epic",
+    "category": "victory",
+    "points": 25
+  }
+]
