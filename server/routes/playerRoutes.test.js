@@ -145,3 +145,56 @@ test('registerPlayerRoutes swaps a card from the stored player deck', async () =
         );
     }
 });
+
+test('registerPlayerRoutes swaps the commander separately from the deck list', async () => {
+    const app = express();
+    app.use(express.json());
+
+    let savedSignups = [{ id: 'player-123', playerName: 'Alice', commander: 'Old Commander' }];
+    let savedDeck;
+    const storedDeck = {
+        name: 'Azorius Control',
+        commander: 'Old Commander',
+        cards: ['Old Commander', 'Sol Ring'],
+        cardTypes: { 'Old Commander': 'Creature' },
+    };
+
+    registerPlayerRoutes(app, {
+        readSignups: async () => savedSignups,
+        writeSignups: async (signups) => { savedSignups = signups; },
+        DEFAULT_PLAYER_PASSWORD: 'CommanderLeague2026',
+        playerNeedsPasswordReset: () => false,
+        withDeckList: (player) => ({ ...player, deckList: player.deckList }),
+        getPlayerDeckList: (player) => player.deckList || [],
+        getDeckByPlayer: async () => storedDeck,
+        saveDeckForPlayer: async (_playerName, deck) => { savedDeck = deck; },
+        readWeekState: async () => ({ currentWeek: 4 }),
+        readAchievements: async () => [],
+    });
+
+    const server = app.listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    const port = server.address().port;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:${port}/api/player/player-123/commander`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                replacementCommander: 'New Commander',
+                replacementCommanderType: 'Creature',
+            }),
+        });
+
+        assert.equal(response.status, 200);
+        assert.equal(savedSignups[0].commander, 'New Commander');
+        assert.equal(savedDeck.commander, 'New Commander');
+        assert.deepEqual(savedDeck.cards, ['New Commander', 'Sol Ring']);
+        assert.equal(savedDeck.cardTypes['Old Commander'], undefined);
+        assert.equal(savedDeck.swaps[0].week, 4);
+    } finally {
+        await new Promise((resolve, reject) =>
+            server.close((error) => (error ? reject(error) : resolve()))
+        );
+    }
+});

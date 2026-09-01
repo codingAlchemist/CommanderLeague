@@ -186,6 +186,10 @@ h1 {
   font-size: 1.35rem;
 }
 
+.commander-swap-btn {
+  margin-left: auto;
+}
+
 .details-card,
 .deck-card {
   background: white;
@@ -428,5 +432,14 @@ h1 {
   .header-actions {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .commander-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .commander-swap-btn {
+    margin-left: 4rem;
   }
 }

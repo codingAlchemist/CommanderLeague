@@ -41,6 +41,9 @@
                 <p class="commander-label">Commander</p>
                 <h2 id="commander-heading">{{ player()!.commander }}</h2>
             </div>
+            <button type="button" class="swap-btn commander-swap-btn" (click)="selectCommanderToSwap()">
+                Swap Commander
+            </button>
         </section>
 
         <div class="details-card">
@@ -76,9 +79,11 @@
             <p class="empty-state">No deck list available for this player yet.</p>
             }
 
-            @if (selectedSwapIndex() !== null) {
+            @if (selectedSwapIndex() !== null || isCommanderSwap()) {
             <div class="swap-form">
-                <label for="replacement-card">Replace card {{ selectedSwapIndex()! + 1 }}</label>
+                <label for="replacement-card">
+                    {{ isCommanderSwap() ? 'Replace commander' : 'Replace card ' + (selectedSwapIndex()! + 1) }}
+                </label>
                 <div class="swap-controls">
                     <div class="card-autocomplete">
                     <input id="replacement-card" type="text" [(ngModel)]="replacementCard"

@@ -168,6 +168,72 @@ module.exports = {
       }
     });
 
+    app.patch('/api/player/:id/commander', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { replacementCommander, replacementCommanderType } = req.body || {};
+
+        if (typeof replacementCommander !== 'string' || replacementCommander.trim() === '') {
+          return res.status(400).json({ error: 'A replacement commander name is required.' });
+        }
+
+        if (typeof replacementCommanderType !== 'string' || replacementCommanderType.trim() === '') {
+          return res.status(400).json({ error: 'A replacement commander type is required.' });
+        }
+
+        const signups = await readSignups();
+        const playerIndex = signups.findIndex((signup) => signup.id === id);
+        if (playerIndex === -1) {
+          return res.status(404).json({ error: 'Player not found' });
+        }
+
+        const player = signups[playerIndex];
+        const storedDeck = typeof getDeckByPlayer === 'function'
+          ? await getDeckByPlayer(player.playerName)
+          : null;
+        if (!storedDeck || !Array.isArray(storedDeck.cards) || storedDeck.cards.length === 0) {
+          return res.status(400).json({ error: 'No deck is available to update its commander.' });
+        }
+
+        const commanderName = replacementCommander.trim();
+        const commanderType = replacementCommanderType.trim();
+        const previousCommanderCard = storedDeck.cards[0];
+        const cards = [...storedDeck.cards];
+        cards[0] = commanderName;
+        const cardTypes = { ...(storedDeck.cardTypes || {}), [commanderName]: commanderType };
+        if (!cards.includes(previousCommanderCard)) {
+          delete cardTypes[previousCommanderCard];
+        }
+        const weekState = typeof readWeekState === 'function' ? await readWeekState() : null;
+        const swaps = Array.isArray(storedDeck.swaps) ? storedDeck.swaps : [];
+
+        player.commander = commanderName;
+        player.deckList = cards;
+        if (player.deck && typeof player.deck === 'object') {
+          player.deck.commander = commanderName;
+          player.deck.cards = cards;
+        }
+        await saveDeckForPlayer(player.playerName, {
+          ...storedDeck,
+          commander: commanderName,
+          cards,
+          cardTypes,
+          swaps: [...swaps, {
+            card: commanderName,
+            cardType: commanderType,
+            date: new Date().toISOString(),
+            week: Number.isInteger(weekState?.currentWeek) ? weekState.currentWeek : null,
+          }],
+        });
+        await writeSignups(signups);
+
+        return res.json(withDeckList(player));
+      } catch (error) {
+        console.error('Error updating player commander:', error);
+        return res.status(500).json({ error: 'Failed to update commander' });
+      }
+    });
+
     app.get('/api/player/:id', async (req, res) => {
       try {
         const { id } = req.params;

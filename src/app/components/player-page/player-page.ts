@@ -31,6 +31,11 @@ interface DeckSwapRequest {
   replacementCardType: string;
 }
 
+interface CommanderSwapRequest {
+  replacementCommander: string;
+  replacementCommanderType: string;
+}
+
 interface PlayerDeck {
   name: string;
   cards: string[];
@@ -87,6 +92,7 @@ export class PlayerPage implements OnInit {
   readonly cardSuggestions = signal<string[]>([]);
   readonly swaps = signal<CardSwap[]>([]);
   readonly isSwapHistoryOpen = signal(false);
+  readonly isCommanderSwap = signal(false);
   private readonly cardSearch = new Subject<string>();
   replacementCard = '';
   replacementCardType = '';
@@ -96,6 +102,9 @@ export class PlayerPage implements OnInit {
     const groups = new Map<string, DeckCard[]>();
 
     cards.forEach((name, index) => {
+      if (index === 0) {
+        return;
+      }
       const type = this.cardTypes()[name] ?? 'Other';
       const group = groups.get(type) ?? [];
       group.push({ name, index, type });
@@ -239,7 +248,18 @@ export class PlayerPage implements OnInit {
   }
 
   selectCardToSwap(index: number): void {
+    this.isCommanderSwap.set(false);
     this.selectedSwapIndex.set(index);
+    this.resetSwapForm();
+  }
+
+  selectCommanderToSwap(): void {
+    this.isCommanderSwap.set(true);
+    this.selectedSwapIndex.set(null);
+    this.resetSwapForm();
+  }
+
+  private resetSwapForm(): void {
     this.swapMessage.set('');
     this.swapSuccess.set(false);
     this.replacementCard = '';
@@ -268,19 +288,23 @@ export class PlayerPage implements OnInit {
     const cardName = this.replacementCard.trim();
     const cardType = this.replacementCardType.trim();
 
-    if (!player || selectedIndex === null || selectedIndex < 0 || !cardName || !cardType) {
+    if (!player || (!this.isCommanderSwap() && (selectedIndex === null || selectedIndex < 0)) || !cardName || !cardType) {
       this.swapMessage.set('Choose a card, enter a replacement name, and select its type before saving.');
       this.swapSuccess.set(false);
       return;
     }
 
-    const request: DeckSwapRequest = {
-      cardIndex: selectedIndex,
-      replacementCard: cardName,
-      replacementCardType: cardType,
-    };
+    const isCommanderSwap = this.isCommanderSwap();
+    const request: DeckSwapRequest | CommanderSwapRequest = isCommanderSwap
+      ? { replacementCommander: cardName, replacementCommanderType: cardType }
+      : {
+          cardIndex: selectedIndex as number,
+          replacementCard: cardName,
+          replacementCardType: cardType,
+        };
+    const endpoint = isCommanderSwap ? 'commander' : 'deck';
 
-    this.http.patch<PlayerProfile>(`/api/player/${player.id}/deck`, request).subscribe({
+    this.http.patch<PlayerProfile>(`/api/player/${player.id}/${endpoint}`, request).subscribe({
       next: (updatedPlayer) => {
         this.player.set(updatedPlayer);
         this.cardTypes.update((types) => ({ ...types, [cardName]: cardType }));
@@ -289,6 +313,7 @@ export class PlayerPage implements OnInit {
           { card: cardName, cardType, date: new Date().toISOString(), week: null },
         ]);
         this.selectedSwapIndex.set(null);
+        this.isCommanderSwap.set(false);
         this.replacementCard = '';
         this.replacementCardType = '';
         this.cardSuggestions.set([]);
