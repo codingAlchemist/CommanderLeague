@@ -6,6 +6,8 @@ module.exports = {
     playerNeedsPasswordReset,
     withDeckList,
     getPlayerDeckList,
+    getDeckByPlayer,
+    saveDeckForPlayer,
     readAchievements
   }) {
     app.post('/api/player/login', async (req, res) => {
@@ -96,7 +98,7 @@ module.exports = {
     app.patch('/api/player/:id/deck', async (req, res) => {
       try {
         const { id } = req.params;
-        const { cardIndex, replacementCard } = req.body || {};
+        const { cardIndex, replacementCard, replacementCardType } = req.body || {};
 
         if (!Number.isInteger(cardIndex) || cardIndex < 0) {
           return res.status(400).json({ error: 'A valid card index is required.' });
@@ -106,6 +108,10 @@ module.exports = {
           return res.status(400).json({ error: 'A replacement card name is required.' });
         }
 
+        if (typeof replacementCardType !== 'string' || replacementCardType.trim() === '') {
+          return res.status(400).json({ error: 'A replacement card type is required.' });
+        }
+
         const signups = await readSignups();
         const playerIndex = signups.findIndex((signup) => signup.id === id);
 
@@ -113,16 +119,31 @@ module.exports = {
           return res.status(404).json({ error: 'Player not found' });
         }
 
-        const deckList = getPlayerDeckList(signups[playerIndex]);
+        const player = signups[playerIndex];
+        const storedDeck = typeof getDeckByPlayer === 'function'
+          ? await getDeckByPlayer(player.playerName)
+          : null;
+        const deckList = Array.isArray(storedDeck?.cards)
+          ? [...storedDeck.cards]
+          : getPlayerDeckList(player);
         if (cardIndex >= deckList.length) {
           return res.status(400).json({ error: 'The selected card index does not exist in this deck.' });
         }
 
-        deckList[cardIndex] = replacementCard.trim();
-        signups[playerIndex].deckList = deckList;
+        const cardName = replacementCard.trim();
+        const cardType = replacementCardType.trim();
+        deckList[cardIndex] = cardName;
+        player.deckList = deckList;
+        if (storedDeck && typeof saveDeckForPlayer === 'function') {
+          const cardTypes = {
+            ...(storedDeck.cardTypes || {}),
+            [cardName]: cardType,
+          };
+          await saveDeckForPlayer(player.playerName, { ...storedDeck, cards: deckList, cardTypes });
+        }
         await writeSignups(signups);
 
-        return res.json(withDeckList(signups[playerIndex]));
+        return res.json(withDeckList(player));
       } catch (error) {
         console.error('Error updating player deck:', error);
         return res.status(500).json({ error: 'Failed to update deck list' });

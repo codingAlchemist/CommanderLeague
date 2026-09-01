@@ -246,7 +246,8 @@ h1 {
   flex-wrap: wrap;
 }
 
-.swap-controls input {
+.swap-controls input,
+.swap-controls select {
   flex: 1 1 220px;
   min-height: 42px;
   border: 1px solid #cbd5e1;

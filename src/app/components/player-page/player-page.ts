@@ -27,12 +27,14 @@ interface PlayerProfile {
 interface DeckSwapRequest {
   cardIndex: number;
   replacementCard: string;
+  replacementCardType: string;
 }
 
 interface PlayerDeck {
   name: string;
   cards: string[];
   commander: string;
+  cardTypes?: Record<string, string>;
 }
 
 interface DeckCard {
@@ -70,6 +72,7 @@ export class PlayerPage implements OnInit {
   readonly swapSuccess = signal(false);
   readonly cardTypes = signal<Record<string, string>>({});
   replacementCard = '';
+  replacementCardType = '';
 
   readonly groupedDeckList = computed(() => {
     const cards = this.player()?.deckList ?? [];
@@ -104,6 +107,7 @@ export class PlayerPage implements OnInit {
           .subscribe({
             next: (deck) => {
               this.player.set({ ...profile, deckList: deck.cards });
+              this.cardTypes.set(deck.cardTypes ?? {});
               this.loadCardTypes(deck.cards);
               this.isLoading.set(false);
             },
@@ -182,15 +186,17 @@ export class PlayerPage implements OnInit {
     this.swapMessage.set('');
     this.swapSuccess.set(false);
     this.replacementCard = '';
+    this.replacementCardType = '';
   }
 
   swapSelectedCard(): void {
     const player = this.player();
     const selectedIndex = this.selectedSwapIndex();
     const cardName = this.replacementCard.trim();
+    const cardType = this.replacementCardType.trim();
 
-    if (!player || selectedIndex === null || selectedIndex < 0 || !cardName) {
-      this.swapMessage.set('Choose a card and enter a replacement name before saving.');
+    if (!player || selectedIndex === null || selectedIndex < 0 || !cardName || !cardType) {
+      this.swapMessage.set('Choose a card, enter a replacement name, and select its type before saving.');
       this.swapSuccess.set(false);
       return;
     }
@@ -198,13 +204,16 @@ export class PlayerPage implements OnInit {
     const request: DeckSwapRequest = {
       cardIndex: selectedIndex,
       replacementCard: cardName,
+      replacementCardType: cardType,
     };
 
     this.http.patch<PlayerProfile>(`/api/player/${player.id}/deck`, request).subscribe({
       next: (updatedPlayer) => {
         this.player.set(updatedPlayer);
+        this.cardTypes.update((types) => ({ ...types, [cardName]: cardType }));
         this.selectedSwapIndex.set(null);
         this.replacementCard = '';
+        this.replacementCardType = '';
         this.swapMessage.set('Deck updated successfully.');
         this.swapSuccess.set(true);
       },

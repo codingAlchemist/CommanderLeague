@@ -78,6 +78,19 @@
                 <div class="swap-controls">
                     <input id="replacement-card" type="text" [(ngModel)]="replacementCard"
                         placeholder="Enter replacement card" />
+                    <select id="replacement-card-type" [(ngModel)]="replacementCardType"
+                        aria-label="Replacement card type">
+                        <option value="" disabled>Select card type</option>
+                        <option value="Creature">Creature</option>
+                        <option value="Instant">Instant</option>
+                        <option value="Sorcery">Sorcery</option>
+                        <option value="Artifact">Artifact</option>
+                        <option value="Enchantment">Enchantment</option>
+                        <option value="Planeswalker">Planeswalker</option>
+                        <option value="Battle">Battle</option>
+                        <option value="Land">Land</option>
+                        <option value="Other">Other</option>
+                    </select>
                     <button type="button" class="save-swap-btn" (click)="swapSelectedCard()">
                         Save Swap
                     </button>

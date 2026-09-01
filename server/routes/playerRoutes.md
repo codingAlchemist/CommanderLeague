@@ -75,13 +75,15 @@ Request body:
 ```json
 {
   "cardIndex": 2,
-  "replacementCard": "Arcane Signet"
+  "replacementCard": "Arcane Signet",
+  "replacementCardType": "Artifact"
 }
 ```
 
 Validation:
 - `cardIndex` must be a non-negative integer
 - `replacementCard` must be a non-empty string
+- `replacementCardType` must be a non-empty string
 
 Success response (200):
 ```json

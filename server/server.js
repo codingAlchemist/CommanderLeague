@@ -3,7 +3,12 @@ const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const Player = require('./models/Player');
-const { registerDeckRoutes, saveDeckForPlayer, getDeckByName } = require('./routes/deckRoutes');
+const {
+  registerDeckRoutes,
+  saveDeckForPlayer,
+  getDeckByName,
+  getDeckByPlayer,
+} = require('./routes/deckRoutes');
 const { registerEventRoutes } = require('./routes/eventRoutes');
 const { registerAdminRoutes } = require('./routes/adminRoutes');
 const { registerPlayerRoutes } = require('./routes/playerRoutes');
@@ -477,6 +482,8 @@ registerPlayerRoutes(app, {
   playerNeedsPasswordReset,
   withDeckList,
   getPlayerDeckList,
+  getDeckByPlayer,
+  saveDeckForPlayer,
   readAchievements,
 });
 registerSignupRoutes(app, {

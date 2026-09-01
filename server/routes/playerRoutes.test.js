@@ -69,3 +69,72 @@ test('registerPlayerRoutes marks an achievement complete for a player via POST /
         );
     }
 });
+
+test('registerPlayerRoutes swaps a card from the stored player deck', async () => {
+    const app = express();
+    app.use(express.json());
+
+    let savedSignups = [
+        {
+            id: 'player-123',
+            playerName: 'Alice',
+            deckList: ['Commander'],
+        },
+    ];
+    let savedDeck;
+    const storedDeck = {
+        name: 'Azorius Control',
+        commander: 'Brago, King Eternal',
+        cards: ['Commander', 'Sol Ring', 'Arcane Signet'],
+    };
+
+    registerPlayerRoutes(app, {
+        readSignups: async () => savedSignups,
+        writeSignups: async (signups) => {
+            savedSignups = signups;
+        },
+        DEFAULT_PLAYER_PASSWORD: 'CommanderLeague2026',
+        playerNeedsPasswordReset: () => false,
+        withDeckList: (player) => ({ ...player, deckList: player.deckList }),
+        getPlayerDeckList: (player) => player.deckList,
+        getDeckByPlayer: async () => storedDeck,
+        saveDeckForPlayer: async (_playerName, deck) => {
+            savedDeck = deck;
+        },
+        readAchievements: async () => [],
+    });
+
+    const server = app.listen(0);
+    await new Promise((resolve) => server.once('listening', resolve));
+    const port = server.address().port;
+
+    try {
+        const response = await fetch(`http://127.0.0.1:${port}/api/player/player-123/deck`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cardIndex: 2,
+                replacementCard: 'Talisman of Progress',
+                replacementCardType: 'Artifact',
+            }),
+        });
+
+        assert.equal(response.status, 200);
+        assert.deepEqual((await response.json()).deckList, [
+            'Commander',
+            'Sol Ring',
+            'Talisman of Progress',
+        ]);
+        assert.deepEqual(savedDeck.cards, [
+            'Commander',
+            'Sol Ring',
+            'Talisman of Progress',
+        ]);
+        assert.equal(savedDeck.cardTypes['Talisman of Progress'], 'Artifact');
+        assert.deepEqual(savedSignups[0].deckList, savedDeck.cards);
+    } finally {
+        await new Promise((resolve, reject) =>
+            server.close((error) => (error ? reject(error) : resolve()))
+        );
+    }
+});

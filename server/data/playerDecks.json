@@ -24,7 +24,7 @@
       "Leyline Tyrant",
       "Nesting Dragon",
       "Nogi, Draco-Zealot",
-      "Opportunistic Dragon",
+      "Myriam, Sentinal Work",
       "Scourge of the Throne",
       "Skarrgan Hellkite",
       "Spit Flame",
@@ -102,6 +102,9 @@
       "Forest",
       "Forest"
     ],
-    "commander": "Ureni"
+    "commander": "Ureni",
+    "cardTypes": {
+      "Myriam, Sentinal Work": "Creature"
+    }
   }
 }
