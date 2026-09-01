@@ -97,7 +97,9 @@ h1 {
   gap: 0.75rem;
 }
 
-.sign-out-btn {
+.sign-out-btn,
+.show-swaps-btn,
+.close-swaps-btn {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: white;
@@ -110,9 +112,15 @@ h1 {
     border-color 0.15s ease;
 }
 
-.sign-out-btn:hover {
+.sign-out-btn:hover,
+.show-swaps-btn:hover,
+.close-swaps-btn:hover {
   background: #f1f5f9;
   border-color: #94a3b8;
+}
+
+.show-swaps-btn {
+  color: #1d4ed8;
 }
 
 .stats-grid {
@@ -144,6 +152,38 @@ h1 {
   color: #0f172a;
   font-size: 1.1rem;
   line-height: 1.5;
+}
+
+.commander-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(120deg, #fff7ed 0%, #fef3c7 100%);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.commander-symbol {
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+}
+
+.commander-label {
+  margin: 0 0 0.25rem;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.commander-card h2 {
+  margin: 0;
+  color: #451a03;
+  font-size: 1.35rem;
 }
 
 .details-card,
@@ -246,6 +286,11 @@ h1 {
   flex-wrap: wrap;
 }
 
+.card-autocomplete {
+  position: relative;
+  flex: 1 1 220px;
+}
+
 .swap-controls input,
 .swap-controls select {
   flex: 1 1 220px;
@@ -254,6 +299,42 @@ h1 {
   border-radius: 10px;
   padding: 0.7rem 0.9rem;
   font-size: 1rem;
+}
+
+.card-autocomplete input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.card-suggestions {
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  max-height: 14rem;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  list-style: none;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+}
+
+.card-suggestions button {
+  width: 100%;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.5rem 0.65rem;
+  background: transparent;
+  color: #1e293b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card-suggestions button:hover,
+.card-suggestions button:focus-visible {
+  background: #eff6ff;
 }
 
 .swap-message {
@@ -269,6 +350,69 @@ h1 {
 .empty-state {
   margin: 0;
   color: #64748b;
+}
+
+.swap-history-backdrop {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.6);
+}
+
+.swap-history-dialog {
+  width: min(100%, 760px);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.28);
+}
+
+.swap-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.swap-history-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.2rem;
+}
+
+.swap-history-dialog > .empty-state {
+  padding: 1.25rem;
+}
+
+.swap-history-table-wrap {
+  overflow-x: auto;
+}
+
+.swap-history-dialog table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #1e293b;
+  text-align: left;
+}
+
+.swap-history-dialog th,
+.swap-history-dialog td {
+  padding: 0.8rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.swap-history-dialog th {
+  color: #475569;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 @media (max-width: 640px) {

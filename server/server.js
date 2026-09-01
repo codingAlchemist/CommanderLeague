@@ -15,6 +15,7 @@ const { registerPlayerRoutes } = require('./routes/playerRoutes');
 const { registerSignupRoutes } = require('./routes/signupRoutes');
 const { registerPodRoutes } = require('./routes/podRoutes');
 const { registerAchievementRoutes } = require('./routes/achievementRoutes');
+const { registerScryfallRoutes } = require('./routes/scryfallRoutes');
 const Admin = require('./models/Admin');
 
 const app = express();
@@ -484,6 +485,7 @@ registerPlayerRoutes(app, {
   getPlayerDeckList,
   getDeckByPlayer,
   saveDeckForPlayer,
+  readWeekState,
   readAchievements,
 });
 registerSignupRoutes(app, {
@@ -513,6 +515,7 @@ registerAchievementRoutes(app, {
   writeAchievements,
   getAchievementPointsByRarity,
 });
+registerScryfallRoutes(app);
 registerDeckRoutes(app, {});
 
 app.get('/api/week-state', async (req, res) => {

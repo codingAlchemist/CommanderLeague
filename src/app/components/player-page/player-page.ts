@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 
 interface PlayerProfile {
   id: string;
@@ -35,6 +36,14 @@ interface PlayerDeck {
   cards: string[];
   commander: string;
   cardTypes?: Record<string, string>;
+  swaps?: CardSwap[];
+}
+
+interface CardSwap {
+  card: string;
+  cardType: string;
+  date: string;
+  week: number | null;
 }
 
 interface DeckCard {
@@ -50,6 +59,10 @@ interface ScryfallCard {
 
 interface ScryfallCollectionResponse {
   data: ScryfallCard[];
+}
+
+interface ScryfallAutocompleteResponse {
+  data: string[];
 }
 
 @Component({
@@ -71,6 +84,10 @@ export class PlayerPage implements OnInit {
   readonly swapMessage = signal('');
   readonly swapSuccess = signal(false);
   readonly cardTypes = signal<Record<string, string>>({});
+  readonly cardSuggestions = signal<string[]>([]);
+  readonly swaps = signal<CardSwap[]>([]);
+  readonly isSwapHistoryOpen = signal(false);
+  private readonly cardSearch = new Subject<string>();
   replacementCard = '';
   replacementCardType = '';
 
@@ -94,6 +111,24 @@ export class PlayerPage implements OnInit {
   });
 
   ngOnInit(): void {
+    this.cardSearch
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        switchMap((query) =>
+          this.http.get<ScryfallAutocompleteResponse>('/api/scryfall/autocomplete', {
+            params: { q: query },
+          }),
+        ),
+      )
+      .subscribe({
+        next: (response) => this.cardSuggestions.set(response.data),
+        error: (error: HttpErrorResponse) => {
+          console.error('Failed to load card suggestions:', error);
+          this.cardSuggestions.set([]);
+        },
+      });
+
     const playerId = this.route.snapshot.paramMap.get('id');
     if (!playerId) {
       this.isLoading.set(false);
@@ -108,6 +143,7 @@ export class PlayerPage implements OnInit {
             next: (deck) => {
               this.player.set({ ...profile, deckList: deck.cards });
               this.cardTypes.set(deck.cardTypes ?? {});
+              this.swaps.set(deck.swaps ?? []);
               this.loadCardTypes(deck.cards);
               this.isLoading.set(false);
             },
@@ -128,6 +164,27 @@ export class PlayerPage implements OnInit {
 
   signOut(): void {
     void this.router.navigate(['/player-login']);
+  }
+
+  openSwapHistory(): void {
+    this.isSwapHistoryOpen.set(true);
+  }
+
+  closeSwapHistory(): void {
+    this.isSwapHistoryOpen.set(false);
+  }
+
+  formatSwapDate(dateString: string): string {
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) {
+      return 'Unknown';
+    }
+
+    return parsed.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   private loadCardTypes(cardNames: string[]): void {
@@ -187,6 +244,22 @@ export class PlayerPage implements OnInit {
     this.swapSuccess.set(false);
     this.replacementCard = '';
     this.replacementCardType = '';
+    this.cardSuggestions.set([]);
+  }
+
+  searchReplacementCard(): void {
+    const query = this.replacementCard.trim();
+    if (query.length < 2) {
+      this.cardSuggestions.set([]);
+      return;
+    }
+
+    this.cardSearch.next(query);
+  }
+
+  selectReplacementCard(cardName: string): void {
+    this.replacementCard = cardName;
+    this.cardSuggestions.set([]);
   }
 
   swapSelectedCard(): void {
@@ -211,9 +284,14 @@ export class PlayerPage implements OnInit {
       next: (updatedPlayer) => {
         this.player.set(updatedPlayer);
         this.cardTypes.update((types) => ({ ...types, [cardName]: cardType }));
+        this.swaps.update((swaps) => [
+          ...swaps,
+          { card: cardName, cardType, date: new Date().toISOString(), week: null },
+        ]);
         this.selectedSwapIndex.set(null);
         this.replacementCard = '';
         this.replacementCardType = '';
+        this.cardSuggestions.set([]);
         this.swapMessage.set('Deck updated successfully.');
         this.swapSuccess.set(true);
       },

@@ -8,6 +8,7 @@ module.exports = {
     getPlayerDeckList,
     getDeckByPlayer,
     saveDeckForPlayer,
+    readWeekState,
     readAchievements
   }) {
     app.post('/api/player/login', async (req, res) => {
@@ -130,6 +131,7 @@ module.exports = {
           return res.status(400).json({ error: 'The selected card index does not exist in this deck.' });
         }
 
+        const replacedCardName = deckList[cardIndex];
         const cardName = replacementCard.trim();
         const cardType = replacementCardType.trim();
         deckList[cardIndex] = cardName;
@@ -139,7 +141,23 @@ module.exports = {
             ...(storedDeck.cardTypes || {}),
             [cardName]: cardType,
           };
-          await saveDeckForPlayer(player.playerName, { ...storedDeck, cards: deckList, cardTypes });
+          if (!deckList.includes(replacedCardName)) {
+            delete cardTypes[replacedCardName];
+          }
+          const weekState = typeof readWeekState === 'function' ? await readWeekState() : null;
+          const swaps = Array.isArray(storedDeck.swaps) ? storedDeck.swaps : [];
+          const swap = {
+            card: cardName,
+            cardType,
+            date: new Date().toISOString(),
+            week: Number.isInteger(weekState?.currentWeek) ? weekState.currentWeek : null,
+          };
+          await saveDeckForPlayer(player.playerName, {
+            ...storedDeck,
+            cards: deckList,
+            cardTypes,
+            swaps: [...swaps, swap],
+          });
         }
         await writeSignups(signups);
 

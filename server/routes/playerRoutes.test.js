@@ -86,6 +86,7 @@ test('registerPlayerRoutes swaps a card from the stored player deck', async () =
         name: 'Azorius Control',
         commander: 'Brago, King Eternal',
         cards: ['Commander', 'Sol Ring', 'Arcane Signet'],
+        cardTypes: { 'Arcane Signet': 'Artifact' },
     };
 
     registerPlayerRoutes(app, {
@@ -101,6 +102,7 @@ test('registerPlayerRoutes swaps a card from the stored player deck', async () =
         saveDeckForPlayer: async (_playerName, deck) => {
             savedDeck = deck;
         },
+        readWeekState: async () => ({ currentWeek: 3 }),
         readAchievements: async () => [],
     });
 
@@ -131,6 +133,11 @@ test('registerPlayerRoutes swaps a card from the stored player deck', async () =
             'Talisman of Progress',
         ]);
         assert.equal(savedDeck.cardTypes['Talisman of Progress'], 'Artifact');
+        assert.equal(savedDeck.cardTypes['Arcane Signet'], undefined);
+        assert.equal(savedDeck.swaps[0].card, 'Talisman of Progress');
+        assert.equal(savedDeck.swaps[0].cardType, 'Artifact');
+        assert.equal(savedDeck.swaps[0].week, 3);
+        assert.ok(Number.isFinite(Date.parse(savedDeck.swaps[0].date)));
         assert.deepEqual(savedSignups[0].deckList, savedDeck.cards);
     } finally {
         await new Promise((resolve, reject) =>

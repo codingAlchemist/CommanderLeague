@@ -15,6 +15,7 @@
                 <span class="status-pill" [class.absent]="player()!.absent">
                     {{ player()!.absent ? 'Absent' : 'Active' }}
                 </span>
+                <button type="button" class="show-swaps-btn" (click)="openSwapHistory()">Show Swaps</button>
                 <button type="button" class="sign-out-btn" (click)="signOut()">Sign Out</button>
             </div>
         </header>
@@ -29,21 +30,24 @@
                 <strong>{{ player()!.deckName }}</strong>
             </div>
             <div class="stat-box">
-                <span class="label">Commander</span>
-                <strong>{{ player()!.commander }}</strong>
-            </div>
-            <div class="stat-box">
                 <span class="label">Discord</span>
                 <strong>{{ player()!.discordUsername }}</strong>
             </div>
         </div>
+
+        <section class="commander-card" aria-labelledby="commander-heading">
+            <img src="commander-league-icon.svg" alt="" aria-hidden="true" class="commander-symbol" />
+            <div>
+                <p class="commander-label">Commander</p>
+                <h2 id="commander-heading">{{ player()!.commander }}</h2>
+            </div>
+        </section>
 
         <div class="details-card">
             <h2>Player Details</h2>
             <div class="detail-list">
                 <p><strong>Email:</strong> {{ player()!.email }}</p>
                 <p><strong>Deck Name:</strong> {{ player()!.deckName }}</p>
-                <p><strong>Commander:</strong> {{ player()!.commander }}</p>
                 <p><strong>Joined:</strong> {{ formatDate(player()!.createdAt) }}</p>
             </div>
         </div>
@@ -76,8 +80,23 @@
             <div class="swap-form">
                 <label for="replacement-card">Replace card {{ selectedSwapIndex()! + 1 }}</label>
                 <div class="swap-controls">
+                    <div class="card-autocomplete">
                     <input id="replacement-card" type="text" [(ngModel)]="replacementCard"
+                        (ngModelChange)="searchReplacementCard()" autocomplete="off"
+                        aria-autocomplete="list" aria-controls="card-suggestions"
                         placeholder="Enter replacement card" />
+                    @if (cardSuggestions().length) {
+                    <ul id="card-suggestions" class="card-suggestions" role="listbox">
+                        @for (suggestion of cardSuggestions(); track suggestion) {
+                        <li role="option">
+                            <button type="button" (click)="selectReplacementCard(suggestion)">
+                                {{ suggestion }}
+                            </button>
+                        </li>
+                        }
+                    </ul>
+                    }
+                    </div>
                     <select id="replacement-card-type" [(ngModel)]="replacementCardType"
                         aria-label="Replacement card type">
                         <option value="" disabled>Select card type</option>
@@ -103,6 +122,45 @@
             }
         </div>
     </article>
+
+    @if (isSwapHistoryOpen()) {
+    <div class="swap-history-backdrop" (click)="closeSwapHistory()">
+        <section class="swap-history-dialog" role="dialog" aria-modal="true" aria-labelledby="swap-history-title"
+            (click)="$event.stopPropagation()">
+            <header class="swap-history-header">
+                <h2 id="swap-history-title">Swap History</h2>
+                <button type="button" class="close-swaps-btn" aria-label="Close swap history"
+                    (click)="closeSwapHistory()">Close</button>
+            </header>
+            @if (swaps().length) {
+            <div class="swap-history-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Card</th>
+                            <th scope="col">Card Type</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Week</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (swap of swaps(); track swap.date) {
+                        <tr>
+                            <td>{{ swap.card }}</td>
+                            <td>{{ swap.cardType }}</td>
+                            <td>{{ formatSwapDate(swap.date) }}</td>
+                            <td>{{ swap.week === null ? 'No active week' : swap.week }}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <p class="empty-state">No card swaps have been recorded.</p>
+            }
+        </section>
+    </div>
+    }
     } @else {
     <div class="error-state">
         <h2>Player not found</h2>
