@@ -90,7 +90,7 @@ h1 {
   background: rgba(15, 23, 42, 0.56);
 }
 
-.coming-soon-dialog {
+.edit-dialog {
   width: min(100%, 420px);
   border-radius: 16px;
   padding: 1.75rem;
@@ -98,16 +98,50 @@ h1 {
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
 }
 
-.coming-soon-dialog h2 {
+.edit-dialog h2 {
   margin: 0.25rem 0 0.75rem;
   color: #0f172a;
   line-height: 1.2;
 }
 
-.coming-soon-dialog > p:not(.eyebrow) {
-  margin-bottom: 1.5rem;
-  color: #475569;
-  line-height: 1.55;
+.edit-dialog form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.edit-dialog label {
+  margin-top: 0.5rem;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.edit-dialog input,
+.edit-dialog textarea,
+.edit-dialog select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  color: #0f172a;
+  font: inherit;
+}
+
+.edit-dialog textarea {
+  resize: vertical;
+}
+
+.save-error {
+  margin: 0.5rem 0 0;
+  color: #b91c1c;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
 .rarity-chip {

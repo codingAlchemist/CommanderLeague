@@ -1,3 +1,20 @@
+function getCardName(card) {
+  return typeof card === 'string' ? card : card?.name;
+}
+
+function getCardType(card, cardTypes = {}) {
+  return typeof card === 'object' && typeof card?.type === 'string'
+    ? card.type
+    : cardTypes[getCardName(card)] || 'Other';
+}
+
+function getCardObjects(cards, cardTypes = {}) {
+  return cards.map((card) => ({
+    name: getCardName(card),
+    type: getCardType(card, cardTypes),
+  }));
+}
+
 module.exports = {
   registerPlayerRoutes(app, {
     readSignups,
@@ -124,8 +141,9 @@ module.exports = {
         const storedDeck = typeof getDeckByPlayer === 'function'
           ? await getDeckByPlayer(player.playerName)
           : null;
+        const storedCardTypes = storedDeck?.cardTypes || {};
         const deckList = Array.isArray(storedDeck?.cards)
-          ? [...storedDeck.cards]
+          ? storedDeck.cards.map(getCardName)
           : getPlayerDeckList(player);
         if (cardIndex >= deckList.length) {
           return res.status(400).json({ error: 'The selected card index does not exist in this deck.' });
@@ -137,13 +155,12 @@ module.exports = {
         deckList[cardIndex] = cardName;
         player.deckList = deckList;
         if (storedDeck && typeof saveDeckForPlayer === 'function') {
-          const cardTypes = {
-            ...(storedDeck.cardTypes || {}),
-            [cardName]: cardType,
-          };
-          if (!deckList.includes(replacedCardName)) {
-            delete cardTypes[replacedCardName];
-          }
+          const cards = deckList.map((name, index) => ({
+            name,
+            type: index === cardIndex
+              ? cardType
+              : getCardType(storedDeck.cards[index], storedCardTypes),
+          }));
           const weekState = typeof readWeekState === 'function' ? await readWeekState() : null;
           const swaps = Array.isArray(storedDeck.swaps) ? storedDeck.swaps : [];
           const swap = {
@@ -154,8 +171,7 @@ module.exports = {
           };
           await saveDeckForPlayer(player.playerName, {
             ...storedDeck,
-            cards: deckList,
-            cardTypes,
+            cards,
             swaps: [...swaps, swap],
           });
         }
@@ -197,18 +213,13 @@ module.exports = {
 
         const commanderName = replacementCommander.trim();
         const commanderType = replacementCommanderType.trim();
-        const previousCommanderCard = storedDeck.cards[0];
-        const cards = [...storedDeck.cards];
-        cards[0] = commanderName;
-        const cardTypes = { ...(storedDeck.cardTypes || {}), [commanderName]: commanderType };
-        if (!cards.includes(previousCommanderCard)) {
-          delete cardTypes[previousCommanderCard];
-        }
+        const cardTypes = storedDeck.cardTypes || {};
+        const cards = getCardObjects(storedDeck.cards, cardTypes);
         const weekState = typeof readWeekState === 'function' ? await readWeekState() : null;
         const swaps = Array.isArray(storedDeck.swaps) ? storedDeck.swaps : [];
 
         player.commander = commanderName;
-        player.deckList = cards;
+        player.deckList = cards.map((card) => card.name);
         if (player.deck && typeof player.deck === 'object') {
           player.deck.commander = commanderName;
           player.deck.cards = cards;
@@ -217,7 +228,6 @@ module.exports = {
           ...storedDeck,
           commander: commanderName,
           cards,
-          cardTypes,
           swaps: [...swaps, {
             card: commanderName,
             cardType: commanderType,

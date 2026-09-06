@@ -38,10 +38,14 @@ interface CommanderSwapRequest {
 
 interface PlayerDeck {
   name: string;
-  cards: string[];
+  cards: DeckCardData[];
   commander: string;
-  cardTypes?: Record<string, string>;
   swaps?: CardSwap[];
+}
+
+interface DeckCardData {
+  name: string;
+  type: string;
 }
 
 interface CardSwap {
@@ -102,9 +106,6 @@ export class PlayerPage implements OnInit {
     const groups = new Map<string, DeckCard[]>();
 
     cards.forEach((name, index) => {
-      if (index === 0) {
-        return;
-      }
       const type = this.cardTypes()[name] ?? 'Other';
       const group = groups.get(type) ?? [];
       group.push({ name, index, type });
@@ -150,10 +151,12 @@ export class PlayerPage implements OnInit {
           .get<PlayerDeck>(`/api/decks/player/${encodeURIComponent(profile.playerName)}`)
           .subscribe({
             next: (deck) => {
-              this.player.set({ ...profile, deckList: deck.cards });
-              this.cardTypes.set(deck.cardTypes ?? {});
+              this.player.set({ ...profile, deckList: deck.cards.map((card) => card.name) });
+              this.cardTypes.set(
+                Object.fromEntries(deck.cards.map((card) => [card.name, card.type])),
+              );
               this.swaps.set(deck.swaps ?? []);
-              this.loadCardTypes(deck.cards);
+              this.loadCardTypes(deck.cards.map((card) => card.name));
               this.isLoading.set(false);
             },
             error: (error: HttpErrorResponse) => {
@@ -288,8 +291,15 @@ export class PlayerPage implements OnInit {
     const cardName = this.replacementCard.trim();
     const cardType = this.replacementCardType.trim();
 
-    if (!player || (!this.isCommanderSwap() && (selectedIndex === null || selectedIndex < 0)) || !cardName || !cardType) {
-      this.swapMessage.set('Choose a card, enter a replacement name, and select its type before saving.');
+    if (
+      !player ||
+      (!this.isCommanderSwap() && (selectedIndex === null || selectedIndex < 0)) ||
+      !cardName ||
+      !cardType
+    ) {
+      this.swapMessage.set(
+        'Choose a card, enter a replacement name, and select its type before saving.',
+      );
       this.swapSuccess.set(false);
       return;
     }

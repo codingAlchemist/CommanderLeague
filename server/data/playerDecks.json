@@ -2,110 +2,399 @@
   "Jason DeBottis": {
     "name": "Temur Roar",
     "cards": [
-      "Ureni of the Unwritten",
-      "Deceptive Frostkite",
-      "Hammerhead Tyrant",
-      "Will of the Temur",
-      "Parapet Thrasher",
-      "Thundermane Dragon",
-      "Zenith Festival",
-      "Become the Avalanche",
-      "Broodcaller Scourge",
-      "Keiga, the Tide Star",
-      "Reflections of Littjara",
-      "Atsushi, the Blazing Sky",
-      "Blasphemous Act",
-      "Chaos Warp",
-      "Dragonmaster Outcast",
-      "Gadrak, the Crown-Scourge",
-      "Glorybringer",
-      "Hellkite Courser",
-      "Lathliss, Dragon Queen",
-      "Leyline Tyrant",
-      "Nesting Dragon",
-      "Nogi, Draco-Zealot",
-      "Miirym, Sentinel Wyrm",
-      "Scourge of the Throne",
-      "Skarrgan Hellkite",
-      "Spit Flame",
-      "Storm's Wrath",
-      "Stormbreath Dragon",
-      "Taurean Mauler",
-      "Territorial Hellkite",
-      "Thunderbreak Regent",
-      "Vengeful Ancestor",
-      "Verix Bladewing",
-      "Frontier Siege",
-      "Selvala's Stampede",
-      "Atarka, World Render",
-      "Dragonlord Atarka",
-      "Harbinger of the Hunt",
-      "Sarkhan, Soul Aflame",
-      "Temur Ascendancy",
-      "Dragon's Hoard",
-      "Steel Hellkite",
-      "Cinder Glade",
-      "Exotic Orchard",
-      "Flooded Grove",
-      "Haven of the Spirit Dragon",
-      "Hinterland Harbor",
-      "Karplusan Forest",
-      "Kessig Wolf Run",
-      "Mossfire Valley",
-      "Mosswort Bridge",
-      "Rockfall Vale",
-      "Rootbound Crag",
-      "Sheltered Thicket",
-      "Shivan Reef",
-      "Sulfur Falls",
-      "Temple of Abandon",
-      "Temple of Mystery",
-      "Yavimaya Coast",
-      "Dragon Tempest",
-      "Breaching Dragonstorm",
-      "Temple of the Dragon Queen",
-      "Arcane Signet",
-      "Sol Ring",
-      "Command Tower",
-      "Stormshriek Feral // Flush Out",
-      "Encroaching Dragonstorm",
-      "Draconic Lore",
-      "Rapid Hybridization",
-      "Reality Shift",
-      "Dragonlord's Servant",
-      "Rapacious Dragon",
-      "Whirlwing Stormbrood // Dynamic Soar",
-      "Beast Within",
-      "Elemental Bond",
-      "Farseek",
-      "Evolving Wilds",
-      "Frontier Bivouac",
-      "Kodama's Reach",
-      "Migration Path",
-      "Fellwar Stone",
-      "Talisman of Creativity",
-      "Talisman of Impulse",
-      "Bountiful Landscape",
-      "Path of Ancestry",
-      "Island",
-      "Island",
-      "Island",
-      "Mountain",
-      "Mountain",
-      "Mountain",
-      "Mountain",
-      "Mountain",
-      "Mountain",
-      "Forest",
-      "Forest",
-      "Forest",
-      "Forest",
-      "Forest"
+      {
+        "name": "Deceptive Frostkite",
+        "type": "Creature"
+      },
+      {
+        "name": "Hammerhead Tyrant",
+        "type": "Creature"
+      },
+      {
+        "name": "Will of the Temur",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Parapet Thrasher",
+        "type": "Creature"
+      },
+      {
+        "name": "Thundermane Dragon",
+        "type": "Creature"
+      },
+      {
+        "name": "Zenith Festival",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Become the Avalanche",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Broodcaller Scourge",
+        "type": "Creature"
+      },
+      {
+        "name": "Keiga, the Tide Star",
+        "type": "Creature"
+      },
+      {
+        "name": "Reflections of Littjara",
+        "type": "Enchantment"
+      },
+      {
+        "name": "Atsushi, the Blazing Sky",
+        "type": "Creature"
+      },
+      {
+        "name": "Blasphemous Act",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Chaos Warp",
+        "type": "Instant"
+      },
+      {
+        "name": "Dragonmaster Outcast",
+        "type": "Creature"
+      },
+      {
+        "name": "Gadrak, the Crown-Scourge",
+        "type": "Creature"
+      },
+      {
+        "name": "Glorybringer",
+        "type": "Creature"
+      },
+      {
+        "name": "Hellkite Courser",
+        "type": "Creature"
+      },
+      {
+        "name": "Lathliss, Dragon Queen",
+        "type": "Creature"
+      },
+      {
+        "name": "Leyline Tyrant",
+        "type": "Creature"
+      },
+      {
+        "name": "Nesting Dragon",
+        "type": "Creature"
+      },
+      {
+        "name": "Nogi, Draco-Zealot",
+        "type": "Creature"
+      },
+      {
+        "name": "Miirym, Sentinel Wyrm",
+        "type": "Creature"
+      },
+      {
+        "name": "Scourge of the Throne",
+        "type": "Creature"
+      },
+      {
+        "name": "Skarrgan Hellkite",
+        "type": "Creature"
+      },
+      {
+        "name": "Spit Flame",
+        "type": "Instant"
+      },
+      {
+        "name": "Storm's Wrath",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Stormbreath Dragon",
+        "type": "Creature"
+      },
+      {
+        "name": "Taurean Mauler",
+        "type": "Creature"
+      },
+      {
+        "name": "Territorial Hellkite",
+        "type": "Creature"
+      },
+      {
+        "name": "Thunderbreak Regent",
+        "type": "Creature"
+      },
+      {
+        "name": "Vengeful Ancestor",
+        "type": "Creature"
+      },
+      {
+        "name": "Verix Bladewing",
+        "type": "Creature"
+      },
+      {
+        "name": "Frontier Siege",
+        "type": "Enchantment"
+      },
+      {
+        "name": "Selvala's Stampede",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Atarka, World Render",
+        "type": "Creature"
+      },
+      {
+        "name": "Dragonlord Atarka",
+        "type": "Creature"
+      },
+      {
+        "name": "Harbinger of the Hunt",
+        "type": "Creature"
+      },
+      {
+        "name": "Sarkhan, Soul Aflame",
+        "type": "Creature"
+      },
+      {
+        "name": "Temur Ascendancy",
+        "type": "Enchantment"
+      },
+      {
+        "name": "Dragon's Hoard",
+        "type": "Artifact"
+      },
+      {
+        "name": "Steel Hellkite",
+        "type": "Artifact Creature"
+      },
+      {
+        "name": "Cinder Glade",
+        "type": "Land"
+      },
+      {
+        "name": "Exotic Orchard",
+        "type": "Land"
+      },
+      {
+        "name": "Flooded Grove",
+        "type": "Land"
+      },
+      {
+        "name": "Haven of the Spirit Dragon",
+        "type": "Land"
+      },
+      {
+        "name": "Hinterland Harbor",
+        "type": "Land"
+      },
+      {
+        "name": "Karplusan Forest",
+        "type": "Land"
+      },
+      {
+        "name": "Kessig Wolf Run",
+        "type": "Land"
+      },
+      {
+        "name": "Mossfire Valley",
+        "type": "Land"
+      },
+      {
+        "name": "Mosswort Bridge",
+        "type": "Land"
+      },
+      {
+        "name": "Rockfall Vale",
+        "type": "Land"
+      },
+      {
+        "name": "Rootbound Crag",
+        "type": "Land"
+      },
+      {
+        "name": "Sheltered Thicket",
+        "type": "Land"
+      },
+      {
+        "name": "Shivan Reef",
+        "type": "Land"
+      },
+      {
+        "name": "Sulfur Falls",
+        "type": "Land"
+      },
+      {
+        "name": "Temple of Abandon",
+        "type": "Land"
+      },
+      {
+        "name": "Temple of Mystery",
+        "type": "Land"
+      },
+      {
+        "name": "Yavimaya Coast",
+        "type": "Land"
+      },
+      {
+        "name": "Dragon Tempest",
+        "type": "Enchantment"
+      },
+      {
+        "name": "Breaching Dragonstorm",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Temple of the Dragon Queen",
+        "type": "Land"
+      },
+      {
+        "name": "Arcane Signet",
+        "type": "Artifact"
+      },
+      {
+        "name": "Sol Ring",
+        "type": "Artifact"
+      },
+      {
+        "name": "Command Tower",
+        "type": "Land"
+      },
+      {
+        "name": "Stormshriek Feral // Flush Out",
+        "type": "Creature"
+      },
+      {
+        "name": "Encroaching Dragonstorm",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Draconic Lore",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Rapid Hybridization",
+        "type": "Instant"
+      },
+      {
+        "name": "Reality Shift",
+        "type": "Instant"
+      },
+      {
+        "name": "Dragonlord's Servant",
+        "type": "Creature"
+      },
+      {
+        "name": "Rapacious Dragon",
+        "type": "Creature"
+      },
+      {
+        "name": "Whirlwing Stormbrood // Dynamic Soar",
+        "type": "Creature"
+      },
+      {
+        "name": "Beast Within",
+        "type": "Instant"
+      },
+      {
+        "name": "Elemental Bond",
+        "type": "Enchantment"
+      },
+      {
+        "name": "Farseek",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Evolving Wilds",
+        "type": "Land"
+      },
+      {
+        "name": "Frontier Bivouac",
+        "type": "Land"
+      },
+      {
+        "name": "Kodama's Reach",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Migration Path",
+        "type": "Sorcery"
+      },
+      {
+        "name": "Fellwar Stone",
+        "type": "Artifact"
+      },
+      {
+        "name": "Talisman of Creativity",
+        "type": "Artifact"
+      },
+      {
+        "name": "Talisman of Impulse",
+        "type": "Artifact"
+      },
+      {
+        "name": "Bountiful Landscape",
+        "type": "Land"
+      },
+      {
+        "name": "Path of Ancestry",
+        "type": "Land"
+      },
+      {
+        "name": "Island",
+        "type": "Land"
+      },
+      {
+        "name": "Island",
+        "type": "Land"
+      },
+      {
+        "name": "Island",
+        "type": "Land"
+      },
+      {
+        "name": "Mountain",
+        "type": "Land"
+      },
+      {
+        "name": "Mountain",
+        "type": "Land"
+      },
+      {
+        "name": "Mountain",
+        "type": "Land"
+      },
+      {
+        "name": "Mountain",
+        "type": "Land"
+      },
+      {
+        "name": "Mountain",
+        "type": "Land"
+      },
+      {
+        "name": "Mountain",
+        "type": "Land"
+      },
+      {
+        "name": "Forest",
+        "type": "Land"
+      },
+      {
+        "name": "Forest",
+        "type": "Land"
+      },
+      {
+        "name": "Forest",
+        "type": "Land"
+      },
+      {
+        "name": "Forest",
+        "type": "Land"
+      },
+      {
+        "name": "Forest",
+        "type": "Land"
+      }
     ],
-    "commander": "Ureni",
-    "cardTypes": {
-      "Myriam, Sentinal Work": "Creature",
-      "Miirym, Sentinel Wyrm": "Creature"
-    }
+    "commander": "Ureni"
   }
 }

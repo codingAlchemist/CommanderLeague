@@ -1,68 +1,92 @@
 <section class="achievements-page">
-    <header class="page-header">
-        <div>
-            <p class="eyebrow">League rewards</p>
-            <h1>Achievements</h1>
-        </div>
-        <div class="header-actions">
-            <button type="button" mat-stroked-button color="primary" (click)="openComingSoonDialog()">
-                Editing coming soon
-            </button>
-            <button type="button" mat-stroked-button color="primary" (click)="loadAchievements()">
-                Refresh
-            </button>
-        </div>
-    </header>
-
-    @if (isLoading && achievements.length === 0) {
-    <div class="loading-state">Loading achievements...</div>
-    } @else if (error) {
-    <div class="error-state">{{ error }}</div>
-    } @else if (achievements.length === 0) {
-    <div class="loading-state">No achievements available yet.</div>
-    } @else {
-    <div class="achievement-grid">
-        @for (achievement of achievements; track achievement.id) {
-        <mat-card class="achievement-card">
-            <mat-card-header>
-                <div mat-card-avatar class="achievement-badge">{{ achievement.points }}</div>
-                <mat-card-title>{{ achievement.title }}</mat-card-title>
-                <mat-card-subtitle>{{ achievement.category }}</mat-card-subtitle>
-            </mat-card-header>
-
-            <mat-card-content>
-                <p class="description">{{ achievement.description }}</p>
-
-                <div class="meta-row">
-                    <span class="rarity-chip" [class]="getRarityClass(achievement.rarity)">
-                        {{ achievement.rarity | titlecase }}
-                    </span>
-                    <span class="points-label">{{ achievement.points }} pts</span>
-                </div>
-
-                <div class="card-actions">
-                    <button mat-stroked-button color="primary" type="button" disabled
-                        aria-label="Editing achievements is coming soon">
-                        Edit
-                    </button>
-                </div>
-            </mat-card-content>
-        </mat-card>
-        }
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">League rewards</p>
+      <h1>Achievements</h1>
     </div>
+    <div class="header-actions">
+      <button type="button" mat-stroked-button color="primary" (click)="loadAchievements()">
+        Refresh
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading && achievements.length === 0) {
+  <div class="loading-state">Loading achievements...</div>
+  } @else if (error) {
+  <div class="error-state">{{ error }}</div>
+  } @else if (achievements.length === 0) {
+  <div class="loading-state">No achievements available yet.</div>
+  } @else {
+  <div class="achievement-grid">
+    @for (achievement of achievements; track achievement.id) {
+    <mat-card class="achievement-card">
+      <mat-card-header>
+        <div mat-card-avatar class="achievement-badge">{{ achievement.points }}</div>
+        <mat-card-title>{{ achievement.title }}</mat-card-title>
+        <mat-card-subtitle>{{ achievement.category }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p class="description">{{ achievement.description }}</p>
+
+        <div class="meta-row">
+          <span class="rarity-chip" [class]="getRarityClass(achievement.rarity)">
+            {{ achievement.rarity | titlecase }}
+          </span>
+          <span class="points-label">{{ achievement.points }} pts</span>
+        </div>
+
+        <div class="card-actions">
+          <button mat-stroked-button color="primary" type="button" (click)="openEditDialog(achievement)">
+            Edit
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
     }
+  </div>
+  }
 </section>
 
-@if (isComingSoonDialogOpen()) {
-<div class="dialog-backdrop" role="presentation" (click)="closeComingSoonDialog()">
-    <section class="coming-soon-dialog" role="dialog" aria-modal="true" aria-labelledby="coming-soon-title"
-        (click)="$event.stopPropagation()">
-        <p class="eyebrow">Feature update</p>
-        <h2 id="coming-soon-title">Achievement editing is coming soon</h2>
-        <p>Achievements are currently view-only. Editing tools will be available in a future update.</p>
-        <button type="button" mat-flat-button color="primary" (click)="closeComingSoonDialog()">
-            Got it
+@if (editingAchievement(); as achievement) {
+<div class="dialog-backdrop" role="presentation" (click)="closeEditDialog()">
+  <section class="edit-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-title"
+    (click)="$event.stopPropagation()">
+    <p class="eyebrow">Feature update</p>
+    <h2 id="edit-title">Edit achievement</h2>
+    <form (ngSubmit)="saveAchievement()">
+      <label for="achievement-title">Title</label>
+      <input id="achievement-title" name="title" [(ngModel)]="editForm.title" required />
+
+      <label for="achievement-description">Description</label>
+      <textarea id="achievement-description" name="description" rows="4" [(ngModel)]="editForm.description"
+        required></textarea>
+
+      <label for="achievement-category">Category</label>
+      <input id="achievement-category" name="category" [(ngModel)]="editForm.category" required />
+
+      <label for="achievement-rarity">Rarity</label>
+      <select id="achievement-rarity" name="rarity" [(ngModel)]="editForm.rarity">
+        <option value="common">Common</option>
+        <option value="uncommon">Uncommon</option>
+        <option value="rare">Rare</option>
+        <option value="epic">Epic</option>
+      </select>
+
+      @if (saveError) {
+      <p class="save-error">{{ saveError }}</p>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" mat-stroked-button (click)="closeEditDialog()" [disabled]="isSaving">
+          Cancel
         </button>
-    </section>
+        <button type="submit" mat-flat-button color="primary" [disabled]="isSaving">
+          {{ isSaving ? 'Saving...' : 'Save changes' }}
+        </button>
+      </div>
+    </form>
+  </section>
 </div>
 }
