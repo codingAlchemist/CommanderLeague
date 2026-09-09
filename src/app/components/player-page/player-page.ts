@@ -4,9 +4,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   OnInit,
   signal,
+  ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -86,6 +88,8 @@ export class PlayerPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  @ViewChild('replacementCardInput') replacementCardInput?: ElementRef<HTMLInputElement>;
 
   readonly player = signal<PlayerProfile | null>(null);
   readonly isLoading = signal(true);
@@ -254,12 +258,23 @@ export class PlayerPage implements OnInit {
     this.isCommanderSwap.set(false);
     this.selectedSwapIndex.set(index);
     this.resetSwapForm();
+    this.scrollToReplacementInput();
   }
 
   selectCommanderToSwap(): void {
     this.isCommanderSwap.set(true);
     this.selectedSwapIndex.set(null);
     this.resetSwapForm();
+    this.scrollToReplacementInput();
+  }
+
+  private scrollToReplacementInput(): void {
+    setTimeout(() => {
+      this.replacementCardInput?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    });
   }
 
   private resetSwapForm(): void {
@@ -283,6 +298,12 @@ export class PlayerPage implements OnInit {
   selectReplacementCard(cardName: string): void {
     this.replacementCard = cardName;
     this.cardSuggestions.set([]);
+  }
+
+  cancelSwap(): void {
+    this.selectedSwapIndex.set(null);
+    this.isCommanderSwap.set(false);
+    this.resetSwapForm();
   }
 
   swapSelectedCard(): void {

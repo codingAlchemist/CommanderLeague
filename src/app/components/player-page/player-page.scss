@@ -271,6 +271,24 @@ h1 {
   transform: translateY(-1px);
 }
 
+.cancel-swap-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  padding: 0.5rem 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease;
+}
+
+.cancel-swap-btn:hover {
+  transform: translateY(-1px);
+  background: #eef2f7;
+}
+
 .swap-form {
   margin-top: 1rem;
   padding-top: 1rem;
