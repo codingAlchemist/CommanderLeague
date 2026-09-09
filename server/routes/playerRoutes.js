@@ -154,13 +154,13 @@ module.exports = {
         const cardType = replacementCardType.trim();
         deckList[cardIndex] = cardName;
         player.deckList = deckList;
+        const cards = deckList.map((name, index) => ({
+          name,
+          type: index === cardIndex
+            ? cardType
+            : getCardType(storedDeck?.cards?.[index], storedCardTypes),
+        }));
         if (storedDeck && typeof saveDeckForPlayer === 'function') {
-          const cards = deckList.map((name, index) => ({
-            name,
-            type: index === cardIndex
-              ? cardType
-              : getCardType(storedDeck.cards[index], storedCardTypes),
-          }));
           const weekState = typeof readWeekState === 'function' ? await readWeekState() : null;
           const swaps = Array.isArray(storedDeck.swaps) ? storedDeck.swaps : [];
           const swap = {
@@ -177,7 +177,15 @@ module.exports = {
         }
         await writeSignups(signups);
 
-        return res.json(withDeckList(player));
+        const cardsWithCommanderFlag = cards.map((card) => ({
+          ...card,
+          commander: card.name === player.commander,
+        }));
+
+        return res.json({
+          ...withDeckList(player),
+          deckList: cardsWithCommanderFlag,
+        });
       } catch (error) {
         console.error('Error updating player deck:', error);
         return res.status(500).json({ error: 'Failed to update deck list' });

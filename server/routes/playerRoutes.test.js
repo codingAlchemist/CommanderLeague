@@ -123,9 +123,9 @@ test('registerPlayerRoutes swaps a card from the stored player deck', async () =
 
     assert.equal(response.status, 200);
     assert.deepEqual((await response.json()).deckList, [
-      'Commander',
-      'Sol Ring',
-      'Talisman of Progress',
+      { name: 'Commander', type: 'Other', commander: false },
+      { name: 'Sol Ring', type: 'Other', commander: false },
+      { name: 'Talisman of Progress', type: 'Artifact', commander: false },
     ]);
     assert.deepEqual(savedDeck.cards, [
       { name: 'Commander', type: 'Other' },

@@ -24,7 +24,7 @@ interface PlayerProfile {
   points: number;
   absent: boolean;
   createdAt: string;
-  deckList?: string[];
+  deckList?: (string | DeckCardResponse)[];
 }
 
 interface DeckSwapRequest {
@@ -48,6 +48,12 @@ interface PlayerDeck {
 interface DeckCardData {
   name: string;
   type: string;
+}
+
+interface DeckCardResponse {
+  name: string;
+  type: string;
+  commander: boolean;
 }
 
 interface CardSwap {
@@ -109,8 +115,9 @@ export class PlayerPage implements OnInit {
     const cards = this.player()?.deckList ?? [];
     const groups = new Map<string, DeckCard[]>();
 
-    cards.forEach((name, index) => {
-      const type = this.cardTypes()[name] ?? 'Other';
+    cards.forEach((card, index) => {
+      const name = typeof card === 'string' ? card : card.name;
+      const type = typeof card === 'string' ? (this.cardTypes()[name] ?? 'Other') : card.type;
       const group = groups.get(type) ?? [];
       group.push({ name, index, type });
       groups.set(type, group);
@@ -277,6 +284,36 @@ export class PlayerPage implements OnInit {
     });
   }
 
+  private applyPlayerUpdate(updatedPlayer: PlayerProfile): void {
+    const deckList = updatedPlayer.deckList ?? [];
+    const hasCardObjects = deckList.some((card) => typeof card !== 'string');
+
+    if (!hasCardObjects) {
+      this.player.set(updatedPlayer);
+      return;
+    }
+
+    const names: string[] = [];
+    const types: Record<string, string> = {};
+    let commander = updatedPlayer.commander;
+
+    for (const card of deckList as (string | DeckCardResponse)[]) {
+      if (typeof card === 'string') {
+        names.push(card);
+        continue;
+      }
+
+      names.push(card.name);
+      types[card.name] = card.type;
+      if (card.commander) {
+        commander = card.name;
+      }
+    }
+
+    this.cardTypes.update((existing) => ({ ...existing, ...types }));
+    this.player.set({ ...updatedPlayer, commander, deckList: names });
+  }
+
   private resetSwapForm(): void {
     this.swapMessage.set('');
     this.swapSuccess.set(false);
@@ -337,8 +374,7 @@ export class PlayerPage implements OnInit {
 
     this.http.patch<PlayerProfile>(`/api/player/${player.id}/${endpoint}`, request).subscribe({
       next: (updatedPlayer) => {
-        this.player.set(updatedPlayer);
-        this.cardTypes.update((types) => ({ ...types, [cardName]: cardType }));
+        this.applyPlayerUpdate(updatedPlayer);
         this.swaps.update((swaps) => [
           ...swaps,
           { card: cardName, cardType, date: new Date().toISOString(), week: null },
