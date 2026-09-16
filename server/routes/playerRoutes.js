@@ -341,7 +341,7 @@ module.exports = {
 
         await writeSignups(signups);
 
-        return res.status(201).json({
+        return res.status(200).json({
           success: true,
           playerId: player.id,
           achievementId,

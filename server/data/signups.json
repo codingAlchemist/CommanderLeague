@@ -29,9 +29,13 @@
       "commander": "Ureni"
     },
     "commander": "Ureni",
-    "points": 0,
+    "points": 40,
     "absent": false,
-    "completedAchievements": [],
+    "completedAchievements": [
+      "ach-001",
+      "ach-002",
+      "ach-020"
+    ],
     "createdAt": "2026-08-27T02:16:49.773Z",
     "deckList": [
       "Ureni of the Unwritten",
