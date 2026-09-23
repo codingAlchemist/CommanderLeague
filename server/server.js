@@ -1,8 +1,20 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs').promises;
-const path = require('path');
-const Player = require('./models/Player');
+const {
+  readSignups,
+  writeSignups,
+  readWeekState,
+  writeWeekState,
+  readPods,
+  writePods,
+  readAchievements,
+  writeAchievements,
+  readAdminCredentials,
+  writeAdminCredentials,
+  getAchievementPointsByRarity,
+  DEFAULT_PLAYER_PASSWORD,
+  DEFAULT_TOTAL_WEEKS,
+} = require('./db/dataAccess');
 const {
   registerDeckRoutes,
   saveDeckForPlayer,
@@ -16,20 +28,12 @@ const { registerSignupRoutes } = require('./routes/signupRoutes');
 const { registerPodRoutes } = require('./routes/podRoutes');
 const { registerAchievementRoutes } = require('./routes/achievementRoutes');
 const { registerScryfallRoutes } = require('./routes/scryfallRoutes');
-const Admin = require('./models/Admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
-const DATA_FILE = path.join(__dirname, 'data', 'signups.json');
-const WEEK_STATE_FILE = path.join(__dirname, 'data', 'week-state.json');
-const PODS_FILE = path.join(__dirname, 'data', 'pods.json');
-const ACHIEVEMENTS_FILE = path.join(__dirname, 'data', 'achievements.json');
-const ADMIN_CREDENTIALS_FILE = path.join(__dirname, 'data', 'admin-credentials.json');
-const DEFAULT_TOTAL_WEEKS = 8;
 const MIN_TOTAL_WEEKS = 1;
 const MAX_TOTAL_WEEKS = 10;
-const DEFAULT_PLAYER_PASSWORD = 'CommanderLeague2026';
 
 // Middleware
 app.use(cors({
@@ -40,227 +44,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Ensure data directory exists
-async function ensureDataDirectory() {
-  const dataDir = path.join(__dirname, 'data');
-  try {
-    await fs.access(dataDir);
-  } catch {
-    await fs.mkdir(dataDir, { recursive: true });
-  }
-
-  // Initialize data file if it doesn't exist
-  try {
-    await fs.access(DATA_FILE);
-  } catch {
-    await fs.writeFile(DATA_FILE, JSON.stringify([], null, 2));
-  }
-
-  try {
-    await fs.access(WEEK_STATE_FILE);
-  } catch {
-    const initialWeekState = {
-      currentWeek: null,
-      startedWeeks: [],
-      totalWeeks: DEFAULT_TOTAL_WEEKS,
-      updatedAt: new Date().toISOString()
-    };
-    await fs.writeFile(WEEK_STATE_FILE, JSON.stringify(initialWeekState, null, 2));
-  }
-
-  try {
-    await fs.access(ADMIN_CREDENTIALS_FILE);
-  } catch {
-    const initialAdminCredentials = Admin.fromRequest({
-      username: 'jason.debottis@gmail.com',
-      password: 'Area51Admin'
-    }).toJSON();
-    await fs.writeFile(ADMIN_CREDENTIALS_FILE, JSON.stringify(initialAdminCredentials, null, 2));
-  }
-
-  try {
-    await fs.access(PODS_FILE);
-  } catch {
-    await fs.writeFile(PODS_FILE, JSON.stringify([], null, 2));
-  }
-
-  try {
-    await fs.access(ACHIEVEMENTS_FILE);
-  } catch {
-    await fs.writeFile(ACHIEVEMENTS_FILE, JSON.stringify([], null, 2));
-  }
-
-  await applyDefaultPasswordsToExistingPlayers();
-}
-
 function playerNeedsPasswordReset(player) {
   const storedPassword = typeof player?.password === 'string' ? player.password : '';
   return storedPassword === '' || storedPassword === DEFAULT_PLAYER_PASSWORD;
-}
-
-// Read signups from file
-async function readSignups() {
-  try {
-    const data = await fs.readFile(DATA_FILE, 'utf8');
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    return parsed.map((signup) => ({
-      ...signup,
-      password: typeof signup.password === 'string' && signup.password.trim() !== ''
-        ? signup.password
-        : DEFAULT_PLAYER_PASSWORD,
-      absent: signup.absent === true
-    }));
-  } catch (error) {
-    console.error('Error reading signups:', error);
-    return [];
-  }
-}
-
-async function applyDefaultPasswordsToExistingPlayers() {
-  try {
-    const signups = await readSignups();
-    const needsUpdate = signups.some((signup) => typeof signup.password !== 'string' || signup.password.trim() === '');
-
-    if (!needsUpdate) {
-      return;
-    }
-
-    const updatedSignups = signups.map((signup) => ({
-      ...signup,
-      password: typeof signup.password === 'string' && signup.password.trim() !== ''
-        ? signup.password
-        : DEFAULT_PLAYER_PASSWORD,
-    }));
-
-    await writeSignups(updatedSignups);
-  } catch (error) {
-    console.error('Error applying default player passwords:', error);
-  }
-}
-
-// Write signups to file
-async function writeSignups(signups) {
-  try {
-    await fs.writeFile(DATA_FILE, JSON.stringify(signups, null, 2));
-  } catch (error) {
-    console.error('Error writing signups:', error);
-    throw error;
-  }
-}
-
-async function readWeekState() {
-  try {
-    const data = await fs.readFile(WEEK_STATE_FILE, 'utf8');
-    const parsed = JSON.parse(data);
-
-    const totalWeeks = Number.isInteger(parsed.totalWeeks)
-      ? Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, parsed.totalWeeks))
-      : DEFAULT_TOTAL_WEEKS;
-
-    const startedWeeks = Array.isArray(parsed.startedWeeks)
-      ? parsed.startedWeeks
-        .filter(week => Number.isInteger(week) && week > 0 && week <= totalWeeks)
-        .sort((a, b) => a - b)
-      : [];
-
-    const currentWeek =
-      typeof parsed.currentWeek === 'number' &&
-        Number.isInteger(parsed.currentWeek) &&
-        parsed.currentWeek > 0 &&
-        parsed.currentWeek <= totalWeeks
-        ? parsed.currentWeek
-        : null;
-
-    return {
-      currentWeek,
-      startedWeeks,
-      totalWeeks,
-      updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('Error reading week state:', error);
-    return {
-      currentWeek: null,
-      startedWeeks: [],
-      totalWeeks: DEFAULT_TOTAL_WEEKS,
-      updatedAt: new Date().toISOString()
-    };
-  }
-}
-
-async function writeWeekState(weekState) {
-  try {
-    await fs.writeFile(WEEK_STATE_FILE, JSON.stringify(weekState, null, 2));
-  } catch (error) {
-    console.error('Error writing week state:', error);
-    throw error;
-  }
-}
-
-// Read pods from file
-async function readPods() {
-  try {
-    const data = await fs.readFile(PODS_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading pods:', error);
-    return [];
-  }
-}
-
-// Write pods to file
-async function writePods(pods) {
-  try {
-    await fs.writeFile(PODS_FILE, JSON.stringify(pods, null, 2));
-  } catch (error) {
-    console.error('Error writing pods:', error);
-    throw error;
-  }
-}
-
-function getAchievementPointsByRarity(rarity) {
-  switch ((typeof rarity === 'string' ? rarity.toLowerCase() : '')) {
-    case 'common':
-      return 5;
-    case 'uncommon':
-      return 8;
-    case 'rare':
-      return 12;
-    case 'epic':
-      return 20;
-    default:
-      return 5;
-  }
-}
-
-async function readAchievements() {
-  try {
-    const data = await fs.readFile(ACHIEVEMENTS_FILE, 'utf8');
-    const parsed = JSON.parse(data);
-    const achievements = Array.isArray(parsed) ? parsed : [];
-
-    return achievements.map((achievement) => ({
-      ...achievement,
-      points: Number.isInteger(achievement?.points)
-        ? achievement.points
-        : getAchievementPointsByRarity(achievement?.rarity)
-    }));
-  } catch (error) {
-    console.error('Error reading achievements:', error);
-    return [];
-  }
-}
-
-async function writeAchievements(achievements) {
-  try {
-    await fs.writeFile(ACHIEVEMENTS_FILE, JSON.stringify(achievements, null, 2));
-  } catch (error) {
-    console.error('Error writing achievements:', error);
-    throw error;
-  }
 }
 
 // Create pods (groupings) for a specific week from current signups
@@ -319,29 +105,6 @@ async function ensurePodsForWeek(week) {
     return newPod;
   } catch (error) {
     console.error('Error ensuring pods for week:', error);
-    throw error;
-  }
-}
-
-async function readAdminCredentials() {
-  const data = await fs.readFile(ADMIN_CREDENTIALS_FILE, 'utf8');
-  const parsed = JSON.parse(data);
-
-  if (typeof parsed.username !== 'string' || typeof parsed.password !== 'string') {
-    throw new Error('Admin credentials file is invalid');
-  }
-
-  return {
-    username: parsed.username,
-    password: parsed.password
-  };
-}
-
-async function writeAdminCredentials(credentials) {
-  try {
-    await fs.writeFile(ADMIN_CREDENTIALS_FILE, JSON.stringify(credentials, null, 2));
-  } catch (error) {
-    console.error('Error writing admin credentials:', error);
     throw error;
   }
 }
@@ -601,11 +364,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Initialize and start server
-ensureDataDirectory().then(() => {
-  app.listen(PORT, HOST, () => {
-    console.log(`Server running on http://${HOST}:${PORT}`);
-  });
-}).catch(error => {
-  console.error('Failed to initialize server:', error);
-  process.exit(1);
+// Schema/data are provisioned via `npm run migrate` / `npm run seed`, not on boot.
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });

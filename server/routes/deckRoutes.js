@@ -1,63 +1,22 @@
 const fs = require('fs').promises;
 const path = require('path');
+const dataAccess = require('../db/dataAccess');
 
-const PLAYER_DECKS_FILE = path.join(__dirname, '..', 'data', 'playerDecks.json');
 const PRECONS_FILE = path.join(__dirname, '..', 'data', 'decks_v2.json');
 
 async function readDecks() {
-  try {
-    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
-    if (!data.trim()) {
-      return [];
-    }
-
-    const parsed = JSON.parse(data);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error('Error reading decks:', error);
-    return [];
-  }
+  // Historically this only ever returned an array (playerDecks.json was keyed by
+  // player name, never an array), so /api/decks always fell through to the precon
+  // catalog below. Preserve that behavior.
+  return [];
 }
 
 async function saveDeckForPlayer(playerName, deck) {
-  let playerDecks = {};
-
-  try {
-    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
-    if (data.trim()) {
-      const parsed = JSON.parse(data);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        playerDecks = parsed;
-      }
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.error('Error reading player decks:', error);
-      throw error;
-    }
-  }
-
-  playerDecks[playerName] = deck;
-  await fs.writeFile(PLAYER_DECKS_FILE, JSON.stringify(playerDecks, null, 2));
+  await dataAccess.saveDeckForPlayer(playerName, deck);
 }
 
 async function getDeckByPlayer(playerName) {
-  try {
-    const data = await fs.readFile(PLAYER_DECKS_FILE, 'utf8');
-    if (!data.trim()) {
-      return null;
-    }
-
-    const playerDecks = JSON.parse(data);
-    if (!playerDecks || typeof playerDecks !== 'object' || Array.isArray(playerDecks)) {
-      return null;
-    }
-
-    return playerDecks[playerName] || null;
-  } catch (error) {
-    console.error('Error reading deck by player:', error);
-    return null;
-  }
+  return dataAccess.getDeckByPlayer(playerName);
 }
 
 async function getDecks() {
