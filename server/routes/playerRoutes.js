@@ -147,12 +147,39 @@ async function writeSignups(signups) {
   }
 }
 
-async function updatePlayerLookingForGame(playerId, lookingForGame) {
-  const result = await pool.query(
-    'UPDATE players SET looking_for_game = $2 WHERE id = $1 RETURNING id',
-    [playerId, lookingForGame === true],
-  );
-  return result.rows.length > 0;
+async function updatePlayerLookingForGame(playerId, lookingForGame, commanderBracket) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      'UPDATE players SET looking_for_game = $2 WHERE id = $1 RETURNING id',
+      [playerId, lookingForGame === true],
+    );
+
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+
+    if (Number.isInteger(commanderBracket)) {
+      await client.query(
+        `INSERT INTO players_looking_for_game (player_id, commander_bracket, updated_at)
+         VALUES ($1, $2, now())
+         ON CONFLICT (player_id) DO UPDATE SET commander_bracket = excluded.commander_bracket, updated_at = now()`,
+        [playerId, commanderBracket],
+      );
+    }
+
+    await client.query('COMMIT');
+    return true;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error updating player looking for game status:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 async function readPlayersLookingForGame() {
@@ -311,17 +338,21 @@ module.exports = {
     app.patch('/api/player/:id/looking-for-game', async (req, res) => {
       try {
         const { id } = req.params;
-        const { lookingForGame } = req.body || {};
+        const { lookingForGame, commanderBracket } = req.body || {};
 
         if (typeof lookingForGame !== 'boolean') {
           return res.status(400).json({ error: 'lookingForGame must be a boolean' });
+        }
+
+        if (commanderBracket !== undefined && !Number.isInteger(commanderBracket)) {
+          return res.status(400).json({ error: 'commanderBracket must be an integer' });
         }
 
         if (typeof updatePlayerLookingForGame !== 'function') {
           return res.status(500).json({ error: 'Player update service is unavailable' });
         }
 
-        const updated = await updatePlayerLookingForGame(id, lookingForGame);
+        const updated = await updatePlayerLookingForGame(id, lookingForGame, commanderBracket);
         if (!updated) {
           return res.status(404).json({ error: 'Player not found' });
         }
