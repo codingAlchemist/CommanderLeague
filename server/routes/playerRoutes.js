@@ -1,3 +1,177 @@
+const pool = require('../config/db');
+
+const DEFAULT_PLAYER_PASSWORD = 'CommanderLeague2026';
+
+async function readSignups() {
+  const [playersResult, decksResult, deckCardsResult, achievementsResult] = await Promise.all([
+    pool.query('SELECT * FROM players ORDER BY created_at'),
+    pool.query('SELECT * FROM decks'),
+    pool.query('SELECT * FROM deck_cards ORDER BY deck_id, position'),
+    pool.query('SELECT * FROM player_achievements'),
+  ]);
+
+  const deckByPlayerId = new Map(decksResult.rows.map((deck) => [deck.player_id, deck]));
+
+  const cardsByDeckId = new Map();
+  for (const card of deckCardsResult.rows) {
+    if (!cardsByDeckId.has(card.deck_id)) cardsByDeckId.set(card.deck_id, []);
+    cardsByDeckId.get(card.deck_id).push(card);
+  }
+
+  const achievementsByPlayerId = new Map();
+  for (const row of achievementsResult.rows) {
+    if (!achievementsByPlayerId.has(row.player_id)) achievementsByPlayerId.set(row.player_id, []);
+    achievementsByPlayerId.get(row.player_id).push(row.achievement_id);
+  }
+
+  return playersResult.rows.map((player) => {
+    const deck = deckByPlayerId.get(player.id);
+    const cards = deck ? (cardsByDeckId.get(deck.id) || []) : [];
+    const password = typeof player.password === 'string' && player.password.trim() !== ''
+      ? player.password
+      : DEFAULT_PLAYER_PASSWORD;
+
+    return {
+      id: player.id,
+      playerName: player.player_name,
+      email: player.email,
+      discordUsername: player.discord_username,
+      password,
+      deckName: deck ? deck.name : '',
+      deck: {
+        name: deck ? deck.name : '',
+        cards: cards.map((card) => (card.card_id || card.description || card.image_url || card.type
+          ? { id: card.card_id, name: card.name, description: card.description, imageUrl: card.image_url, type: card.type }
+          : card.name)),
+        commander: deck ? deck.commander : '',
+      },
+      commander: deck ? deck.commander : '',
+      points: player.points,
+      absent: player.absent === true,
+      lookingForGame: player.looking_for_game === true,
+      completedAchievements: achievementsByPlayerId.get(player.id) || [],
+      createdAt: player.created_at.toISOString(),
+    };
+  });
+}
+
+async function writeSignups(signups) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const ids = signups.map((player) => player.id);
+    if (ids.length > 0) {
+      await client.query('DELETE FROM players WHERE id <> ALL($1::text[])', [ids]);
+    } else {
+      await client.query('DELETE FROM players');
+    }
+
+    for (const player of signups) {
+      await client.query(
+        `INSERT INTO players (id, player_name, email, discord_username, password, points, absent, looking_for_game, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (id) DO UPDATE SET
+           player_name = excluded.player_name,
+           email = excluded.email,
+           discord_username = excluded.discord_username,
+           password = excluded.password,
+           points = excluded.points,
+           absent = excluded.absent,
+           looking_for_game = excluded.looking_for_game,
+           created_at = excluded.created_at`,
+        [
+          player.id,
+          player.playerName,
+          player.email,
+          player.discordUsername,
+          player.password || '',
+          player.points || 0,
+          player.absent === true,
+          player.lookingForGame === true,
+          player.createdAt || new Date().toISOString(),
+        ],
+      );
+
+      if (player.deck && player.deck.name) {
+        const deckResult = await client.query(
+          `INSERT INTO decks (player_id, name, commander)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (player_id) DO UPDATE SET name = excluded.name, commander = excluded.commander
+           RETURNING id`,
+          [player.id, player.deck.name, player.deck.commander || player.commander || ''],
+        );
+        const deckId = deckResult.rows[0].id;
+
+        await client.query('DELETE FROM deck_cards WHERE deck_id = $1', [deckId]);
+
+        const cards = Array.isArray(player.deck.cards) ? player.deck.cards : [];
+        for (let i = 0; i < cards.length; i += 1) {
+          const card = cards[i];
+          const isObject = card && typeof card === 'object';
+          await client.query(
+            `INSERT INTO deck_cards (deck_id, card_id, name, description, image_url, type, position)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [
+              deckId,
+              isObject ? card.id || null : null,
+              isObject ? card.name : card,
+              isObject ? card.description || null : null,
+              isObject ? card.imageUrl || null : null,
+              isObject ? card.type || null : null,
+              i,
+            ],
+          );
+        }
+      } else {
+        await client.query('DELETE FROM decks WHERE player_id = $1', [player.id]);
+      }
+
+      await client.query('DELETE FROM player_achievements WHERE player_id = $1', [player.id]);
+      const completed = Array.isArray(player.completedAchievements) ? player.completedAchievements : [];
+      for (const achievementId of completed) {
+        await client.query(
+          'INSERT INTO player_achievements (player_id, achievement_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [player.id, achievementId],
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error writing signups:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+async function updatePlayerLookingForGame(playerId, lookingForGame) {
+  const result = await pool.query(
+    'UPDATE players SET looking_for_game = $2 WHERE id = $1 RETURNING id',
+    [playerId, lookingForGame === true],
+  );
+  return result.rows.length > 0;
+}
+
+async function readPlayersLookingForGame() {
+  const result = await pool.query(
+    `SELECT id, player_name, email, discord_username, points, created_at
+     FROM players
+     WHERE looking_for_game = true
+     ORDER BY player_name`,
+  );
+  return result.rows.map((player) => ({
+    id: player.id,
+    playerName: player.player_name,
+    email: player.email,
+    discordUsername: player.discord_username,
+    points: player.points,
+    createdAt: player.created_at.toISOString(),
+  }));
+}
+
 function getCardName(card) {
   return typeof card === 'string' ? card : card?.name;
 }
@@ -16,9 +190,16 @@ function getCardObjects(cards, cardTypes = {}) {
 }
 
 module.exports = {
+  DEFAULT_PLAYER_PASSWORD,
+  readSignups,
+  writeSignups,
+  updatePlayerLookingForGame,
+  readPlayersLookingForGame,
   registerPlayerRoutes(app, {
     readSignups,
     writeSignups,
+    updatePlayerLookingForGame,
+    readPlayersLookingForGame,
     DEFAULT_PLAYER_PASSWORD,
     playerNeedsPasswordReset,
     withDeckList,
@@ -110,6 +291,48 @@ module.exports = {
       } catch (error) {
         console.error('Error setting player password:', error);
         return res.status(500).json({ error: 'Failed to save player password' });
+      }
+    });
+
+    app.get('/api/player/looking-for-game', async (req, res) => {
+      try {
+        if (typeof readPlayersLookingForGame !== 'function') {
+          return res.status(500).json({ error: 'Player lookup service is unavailable' });
+        }
+
+        const players = await readPlayersLookingForGame();
+        return res.json(players);
+      } catch (error) {
+        console.error('Error retrieving players looking for a game:', error);
+        return res.status(500).json({ error: 'Failed to retrieve players looking for a game' });
+      }
+    });
+
+    app.patch('/api/player/:id/looking-for-game', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { lookingForGame } = req.body || {};
+
+        if (typeof lookingForGame !== 'boolean') {
+          return res.status(400).json({ error: 'lookingForGame must be a boolean' });
+        }
+
+        if (typeof updatePlayerLookingForGame !== 'function') {
+          return res.status(500).json({ error: 'Player update service is unavailable' });
+        }
+
+        const updated = await updatePlayerLookingForGame(id, lookingForGame);
+        if (!updated) {
+          return res.status(404).json({ error: 'Player not found' });
+        }
+
+        const signups = await readSignups();
+        const player = signups.find((signup) => signup.id === id);
+
+        return res.json(withDeckList(player));
+      } catch (error) {
+        console.error('Error updating player looking for game status:', error);
+        return res.status(500).json({ error: 'Failed to update looking for game status' });
       }
     });
 

@@ -2,8 +2,38 @@ const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const Admin = require('../models/Admin');
+const pool = require('../config/db');
 
 const ADMIN_FILE = path.join(__dirname, '..', 'data', 'admin-credentials.json');
+
+async function readAdminCredentialsFromDb() {
+    const result = await pool.query('SELECT username, password FROM admins ORDER BY created_at ASC LIMIT 1');
+    if (result.rows.length === 0) {
+        throw new Error('Admin credentials not found');
+    }
+    return { username: result.rows[0].username, password: result.rows[0].password };
+}
+
+async function writeAdminCredentialsToDb(credentials) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM admins WHERE username <> $1', [credentials.username]);
+        await client.query(
+            `INSERT INTO admins (username, password)
+       VALUES ($1, $2)
+       ON CONFLICT (username) DO UPDATE SET password = excluded.password`,
+            [credentials.username, credentials.password],
+        );
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error writing admin credentials:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
 
 async function readAdmins() {
     try {
@@ -61,6 +91,8 @@ module.exports = {
     getPrimaryAdmin,
     readAdminCredentials,
     writeAdminCredentials,
+    readAdminCredentialsFromDb,
+    writeAdminCredentialsToDb,
     registerAdminRoutes(app, {
         readAdminCredentials: readAdminCredentialsFromDeps,
         writeAdminCredentials: writeAdminCredentialsFromDeps,

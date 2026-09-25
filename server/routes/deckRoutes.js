@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
-const dataAccess = require('../db/dataAccess');
+const pool = require('../config/db');
 
 const PRECONS_FILE = path.join(__dirname, '..', 'data', 'decks_v2.json');
 
@@ -12,11 +12,22 @@ async function readDecks() {
 }
 
 async function saveDeckForPlayer(playerName, deck) {
-  await dataAccess.saveDeckForPlayer(playerName, deck);
+  await pool.query(
+    `INSERT INTO player_full_decks (player_name, deck, updated_at)
+     VALUES ($1, $2, now())
+     ON CONFLICT (player_name) DO UPDATE SET deck = excluded.deck, updated_at = now()`,
+    [playerName, JSON.stringify(deck)],
+  );
 }
 
 async function getDeckByPlayer(playerName) {
-  return dataAccess.getDeckByPlayer(playerName);
+  const result = await pool.query('SELECT deck FROM player_full_decks WHERE player_name = $1', [playerName]);
+  return result.rows.length > 0 ? result.rows[0].deck : null;
+}
+
+async function readPlayerFullDecks() {
+  const result = await pool.query('SELECT deck FROM player_full_decks');
+  return result.rows.map((row) => row.deck).filter(Boolean);
 }
 
 async function getDecks() {
@@ -78,6 +89,7 @@ module.exports = {
   readDecks,
   saveDeckForPlayer,
   getDeckByPlayer,
+  readPlayerFullDecks,
   getDecks,
   getAllDecks,
   getDeckByName,

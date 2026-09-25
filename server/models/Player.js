@@ -1,7 +1,7 @@
 const Deck = require('./Deck');
 
 class Player {
-  constructor({ id, playerName, email, discordUsername, deckName, deck, commander, createdAt, points, absent, completedAchievements, password }) {
+  constructor({ id, playerName, email, discordUsername, deckName, deck, commander, createdAt, points, absent, completedAchievements, password, lookingForGame }) {
     this.id = id || Date.now().toString();
     this.playerName = playerName;
     this.email = email;
@@ -24,6 +24,7 @@ class Player {
       ? completedAchievements
       : [];
     this.createdAt = createdAt || new Date().toISOString();
+    this.lookingForGame = lookingForGame === true;
   }
 
   // Validate player data
@@ -99,7 +100,8 @@ class Player {
       points: this.points,
       absent: this.absent,
       completedAchievements: this.completedAchievements,
-      createdAt: this.createdAt
+      createdAt: this.createdAt,
+      lookingForGame: this.lookingForGame
     };
   }
 }

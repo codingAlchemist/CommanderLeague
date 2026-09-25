@@ -1,4 +1,63 @@
+const pool = require('../config/db');
+
+async function readPods() {
+    const [weeksResult, podsResult] = await Promise.all([
+        pool.query('SELECT week_number, created_at FROM weeks ORDER BY week_number'),
+        pool.query('SELECT week_number, group_number, winner_id, player_snapshots FROM pods ORDER BY week_number, group_number'),
+    ]);
+
+    const groupsByWeek = new Map();
+    for (const pod of podsResult.rows) {
+        if (!groupsByWeek.has(pod.week_number)) groupsByWeek.set(pod.week_number, []);
+        groupsByWeek.get(pod.week_number).push({
+            groupNumber: pod.group_number,
+            players: pod.player_snapshots || [],
+            winnerId: pod.winner_id,
+        });
+    }
+
+    return weeksResult.rows.map((week) => ({
+        week: week.week_number,
+        groups: (groupsByWeek.get(week.week_number) || []).sort((a, b) => a.groupNumber - b.groupNumber),
+        createdAt: week.created_at.toISOString(),
+    }));
+}
+
+async function writePods(pods) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        // Weeks cascade-delete their pods.
+        await client.query('DELETE FROM weeks');
+
+        for (const weekEntry of pods) {
+            await client.query(
+                'INSERT INTO weeks (week_number, created_at) VALUES ($1, $2)',
+                [weekEntry.week, weekEntry.createdAt || new Date().toISOString()],
+            );
+
+            for (const group of weekEntry.groups || []) {
+                await client.query(
+                    `INSERT INTO pods (week_number, group_number, winner_id, player_snapshots)
+           VALUES ($1, $2, $3, $4)`,
+                    [weekEntry.week, group.groupNumber, group.winnerId || null, JSON.stringify(group.players || [])],
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error writing pods:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
+    readPods,
+    writePods,
     registerPodRoutes(app, {
         readSignups,
         readPods,

@@ -1,40 +1,30 @@
 const express = require('express');
 const cors = require('cors');
 const {
-  readSignups,
-  writeSignups,
-  readWeekState,
-  writeWeekState,
-  readPods,
-  writePods,
-  readAchievements,
-  writeAchievements,
-  readAdminCredentials,
-  writeAdminCredentials,
-  getAchievementPointsByRarity,
-  DEFAULT_PLAYER_PASSWORD,
-  DEFAULT_TOTAL_WEEKS,
-} = require('./db/dataAccess');
-const {
   registerDeckRoutes,
   saveDeckForPlayer,
   getDeckByName,
   getDeckByPlayer,
 } = require('./routes/deckRoutes');
 const { registerEventRoutes } = require('./routes/eventRoutes');
-const { registerAdminRoutes } = require('./routes/adminRoutes');
-const { registerPlayerRoutes } = require('./routes/playerRoutes');
+const { registerAdminRoutes, readAdminCredentialsFromDb, writeAdminCredentialsToDb } = require('./routes/adminRoutes');
+const {
+  registerPlayerRoutes,
+  readSignups,
+  writeSignups,
+  updatePlayerLookingForGame,
+  readPlayersLookingForGame,
+  DEFAULT_PLAYER_PASSWORD,
+} = require('./routes/playerRoutes');
 const { registerSignupRoutes } = require('./routes/signupRoutes');
-const { registerPodRoutes } = require('./routes/podRoutes');
-const { registerAchievementRoutes } = require('./routes/achievementRoutes');
+const { registerPodRoutes, readPods, writePods } = require('./routes/podRoutes');
+const { registerAchievementRoutes, readAchievements, writeAchievements, getAchievementPointsByRarity } = require('./routes/achievementRoutes');
 const { registerScryfallRoutes } = require('./routes/scryfallRoutes');
+const { registerWeekRoutes, readWeekState, writeWeekState } = require('./routes/weekRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
-const MIN_TOTAL_WEEKS = 1;
-const MAX_TOTAL_WEEKS = 10;
-
 // Middleware
 app.use(cors({
   origin: '*',
@@ -238,10 +228,15 @@ function sendSseEvent(event, data) {
 }
 
 registerEventRoutes(app, { sseClients, sendSseEvent });
-registerAdminRoutes(app, { readAdminCredentials, writeAdminCredentials });
+registerAdminRoutes(app, {
+  readAdminCredentials: readAdminCredentialsFromDb,
+  writeAdminCredentials: writeAdminCredentialsToDb,
+});
 registerPlayerRoutes(app, {
   readSignups,
   writeSignups,
+  updatePlayerLookingForGame,
+  readPlayersLookingForGame,
   DEFAULT_PLAYER_PASSWORD,
   playerNeedsPasswordReset,
   withDeckList,
@@ -280,83 +275,7 @@ registerAchievementRoutes(app, {
 });
 registerScryfallRoutes(app);
 registerDeckRoutes(app, {});
-
-app.get('/api/week-state', async (req, res) => {
-  try {
-    const state = await readWeekState();
-    res.json(state);
-  } catch (error) {
-    console.error('Error fetching week state:', error);
-    res.status(500).json({ error: 'Failed to fetch week state' });
-  }
-});
-
-app.patch('/api/week-state', async (req, res) => {
-  try {
-    const body = req.body || {};
-    const currentState = await readWeekState();
-    const totalWeeks = Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, currentState.totalWeeks));
-
-    const nextState = {
-      ...currentState,
-      currentWeek: body.currentWeek === null || body.currentWeek === undefined ? null : Number(body.currentWeek),
-      startedWeeks: Array.isArray(body.startedWeeks)
-        ? [...new Set(body.startedWeeks.map((week) => Number(week)).filter((week) => Number.isInteger(week) && week > 0 && week <= totalWeeks))].sort((a, b) => a - b)
-        : currentState.startedWeeks,
-      totalWeeks,
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (nextState.currentWeek !== null && (nextState.currentWeek < 1 || nextState.currentWeek > totalWeeks)) {
-      nextState.currentWeek = null;
-    }
-
-    await writeWeekState(nextState);
-    res.json(nextState);
-  } catch (error) {
-    console.error('Error updating week state:', error);
-    res.status(500).json({ error: 'Failed to update week state' });
-  }
-});
-
-app.patch('/api/week-state/total-weeks', async (req, res) => {
-  try {
-    const delta = Number(req.body?.delta ?? 0);
-    const currentState = await readWeekState();
-    const nextTotalWeeks = Math.max(MIN_TOTAL_WEEKS, Math.min(MAX_TOTAL_WEEKS, currentState.totalWeeks + (Number.isInteger(delta) ? delta : 0)));
-
-    const nextState = {
-      ...currentState,
-      totalWeeks: nextTotalWeeks,
-      currentWeek: currentState.currentWeek !== null && currentState.currentWeek > nextTotalWeeks ? null : currentState.currentWeek,
-      startedWeeks: currentState.startedWeeks.filter((week) => week <= nextTotalWeeks),
-      updatedAt: new Date().toISOString(),
-    };
-
-    await writeWeekState(nextState);
-    res.json(nextState);
-  } catch (error) {
-    console.error('Error updating total weeks:', error);
-    res.status(500).json({ error: 'Failed to update total weeks' });
-  }
-});
-
-app.post('/api/week-state/reset', async (req, res) => {
-  try {
-    const resetState = {
-      currentWeek: null,
-      startedWeeks: [],
-      totalWeeks: DEFAULT_TOTAL_WEEKS,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await writeWeekState(resetState);
-    res.status(201).json(resetState);
-  } catch (error) {
-    console.error('Error resetting week state:', error);
-    res.status(500).json({ error: 'Failed to reset week state' });
-  }
-});
+registerWeekRoutes(app, { readWeekState, writeWeekState });
 
 // Health check
 app.get('/api/health', (req, res) => {
